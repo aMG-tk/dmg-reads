@@ -1,0 +1,36 @@
+{% set setup_data = load_setup_py_data() %}
+package:
+  name: dmg-reads
+  version: {{ setup_data['version'] }}
+
+source:
+  git_rev: {{ setup_data['version'] }}
+  git_url: https://github.com/genomewalker/dmg-reads.git
+
+build:
+  number: 0
+  skip: true  # [win and py27 or win32]
+  script: {{ PYTHON }} -m pip install . --no-deps -vv
+
+requirements:
+  build:
+    - python>=3.8,<3.10
+    - setuptools>=18.0
+    - pip
+    - Cython>=0.29.24
+  run:
+    - python>=3.8,<3.10
+    - Cython>=0.29.24
+    - pip
+    - pandas>=1.4.2
+    - ete3>=3.1.2
+    
+test:
+  commands:
+    - dReads -h
+
+about:
+  home: https://github.com/genomewalker/dmg-reads
+  summary: "A simple tool to filter BLASTx m8 files using the FAMLI algorithm"
+  license: {{ setup_data['license'] }}
+  license_file: LICENSE

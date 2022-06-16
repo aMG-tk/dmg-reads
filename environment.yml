@@ -1,0 +1,9 @@
+name: dmg-reads
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.8,<3.10
+  - Cython>=0.29.24
+  - pip
