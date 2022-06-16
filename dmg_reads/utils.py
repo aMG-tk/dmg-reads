@@ -129,7 +129,7 @@ help_msg = {
 
 def get_arguments(argv=None):
     parser = argparse.ArgumentParser(
-        description="A simple tool to collapse a GTDB tree to a certain taxonomic rank",
+        description="A simple tool to extract damaged reads from BAM files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -148,7 +148,6 @@ def get_arguments(argv=None):
         help=help_msg["metaDMG_filter"],
         required=True,
     )
-    # this is an argument to comma separated list of ranks for which to collapse
     parser.add_argument(
         "-b",
         "--bam",

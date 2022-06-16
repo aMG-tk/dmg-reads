@@ -59,7 +59,7 @@ For a complete list of options:
 $ dReads --help
 usage: dReads [-h] -r METADMG_RESULTS -f METADMG_FILTER [-b BAM] [-p PREFIX] [--debug] [--version]
 
-A simple tool to collapse a GTDB tree to a certain taxonomic rank
+A simple tool to extract damaged reads from BAM files
 
 optional arguments:
   -h, --help            show this help message and exit
