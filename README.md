@@ -4,7 +4,7 @@
 
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/genomewalker/dmg-reads?include_prereleases&label=version)](https://github.com/genomewalker/dmg-reads/releases) [![dmg-reads](https://github.com/genomewalker/dmg-reads/workflows/dReads_ci/badge.svg)](https://github.com/genomewalker/dmg-reads/actions) [![PyPI](https://img.shields.io/pypi/v/dmg-reads)](https://pypi.org/project/dmg-reads/) [![Conda](https://img.shields.io/conda/v/genomewalker/dmg-reads)](https://anaconda.org/genomewalker/dmg-reads)
 
-A simple tool to collapse a GTDB to a certain rank.
+A simple tool to extract damaged reads from BAM files
 
 # Installation
 
