@@ -7,3 +7,8 @@ dependencies:
   - python>=3.8,<3.10
   - Cython>=0.29.24
   - pip
+  - pandas>=1.4.2
+  - tqdm==4.50.0
+  - pysam>=0.17.0
+  - numpy>=1.21.2
+  - biopython>=1.79
