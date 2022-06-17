@@ -80,6 +80,10 @@ def main():
             pysam.index(bam, "-c")
         else:
             pysam.index(bam)
+        logging.info(f"Reloading BAM file")
+        samfile = pysam.AlignmentFile(
+            bam, "rb"
+        )  # Need to reload the samfile after creating index
     reads_damaged_seen = {}
     reads_nondamaged_seen = {}
 
