@@ -27,4 +27,7 @@ def load_mdmg_results(file_path):
     """
     mdmg_results = pd.read_csv(file_path, sep=",", index_col=None)
     mdmg_results.rename(columns={"tax_id": "reference"}, inplace=True)
+    mdmg_results["Bayesian_significance"] = (
+        mdmg_results["Bayesian_D_max"] / mdmg_results["Bayesian_D_max_std"]
+    )
     return mdmg_results
