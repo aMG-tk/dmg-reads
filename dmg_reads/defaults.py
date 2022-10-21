@@ -81,3 +81,15 @@ mdmg_header = [
     "Bayesian_phi_std",
     "Bayesian_rho_Ac",
 ]
+
+valid_ranks = {
+    "domain": "d__",
+    "kingdom": "k__",
+    "lineage": "l__",
+    "phylum": "p__",
+    "class": "c__",
+    "order": "o__",
+    "family": "f__",
+    "genus": "g__",
+    "species": "s__",
+}
