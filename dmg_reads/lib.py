@@ -1,4 +1,3 @@
-import logging
 import pandas as pd
 
 
@@ -11,13 +10,6 @@ def filter_damaged_taxa(df, filter_conditions):
     Returns:
         pandas.DataFrame: A filtered dataframe containing metaDMG results
     """
-    # filter rows by d_max, phi, qvalue
-    # mdmg_results = df.loc[
-    #     (df["D_max"] >= filter_conditions["d_max"])
-    #     & (df["phi"] >= filter_conditions["phi"])
-    #     & (df["q"] >= filter_conditions["q"])
-    #     & (df["tax_rank"] == taxonomic_rank)
-    # ]
 
     mdmg_results = df.loc[
         (df[list(filter_conditions)] >= pd.Series(filter_conditions)).all(axis=1)

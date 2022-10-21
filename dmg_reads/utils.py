@@ -294,7 +294,7 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
         if combined:
             out_files = {
                 "fastq_damaged": f"{prefix}.damaged.fastq.gz",
-                "fastq_nondamaged": f"{prefix}.nondamaged.fastq.gz",
+                "fastq_nondamaged": f"{prefix}.non-damaged.fastq.gz",
                 "fastq_multi": f"{prefix}.multi.fastq.gz",
                 "fastq_combined": f"{prefix}.fastq.gz",
             }
@@ -316,7 +316,7 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
                 out_files[f"fastq_damaged_{k}{v}"] = f"{prefix}.{k}{v}.damaged.fastq.gz"
                 out_files[
                     f"fastq_nondamaged_{k}{v}"
-                ] = f"{prefix}.{k}{v}.nondamaged.fastq.gz"
+                ] = f"{prefix}.{k}{v}.non-damaged.fastq.gz"
                 out_files[f"fastq_multi_{k}{v}"] = f"{prefix}.{k}{v}.multi.fastq.gz"
                 out_files[f"fastq_combined_{k}{v}"] = f"{prefix}.{k}{v}.fastq.gz"
     return out_files

@@ -22,13 +22,11 @@
 
 import logging
 
-from black import out
 from dmg_reads.utils import get_arguments, create_output_files, splitkeep, fast_flatten
 from dmg_reads.lib import load_mdmg_results, filter_damaged_taxa
 from dmg_reads.defaults import valid_ranks
 import pandas as pd
 import os
-from pathlib import Path
 import pysam
 import numpy as np
 from Bio import SeqIO, Seq, SeqRecord
@@ -200,11 +198,8 @@ def main():
 
             seen[refs_tax[aln.reference_name]][aln.qname] = +1
 
-    # write reads
-    fastq_damaged_n = 0
-    fastq_non_damaged_n = 0
-    fastq_multi_n = 0
-    fastq_combined_n = 0
+        # write reads
+    fastq_damaged_n = fastq_non_damaged_n = fastq_multi_n = fastq_combined_n = 0
     logging.info("Saving reads...")
     for ref in tqdm.tqdm(
         refs, ncols=80, desc="Taxa processed", leave=False, total=len(refs)
@@ -251,7 +246,6 @@ def main():
                     elif reads[ref][read]["is_damaged"] == "multi":
                         SeqIO.write(rec, f_multi, "fastq")
                         fastq_multi_n += 1
-
         if fastq_damaged_n == 0:
             if os.path.exists(fastq_damaged):
                 os.remove(fastq_damaged)
@@ -264,6 +258,7 @@ def main():
         if fastq_combined_n == 0:
             if os.path.exists(fastq_combined):
                 os.remove(fastq_combined)
+        fastq_damaged_n = fastq_non_damaged_n = fastq_multi_n = fastq_combined_n = 0
 
     logging.info("Done!")
 
