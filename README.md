@@ -110,5 +110,24 @@ If the `--combine` and the `--only-damaged` flag are not set, `dReads` will prod
 - `*.multi.fastq.gz`: The reads mapped to multiple references which are damaged and non-damaged
 
 
+# Using taxonomies
+To be able to extract reads from specific taxa and/or ranks, one needs to provide a taxonomy file. This file should be a TSV file with the following format:
+
+```
+ACCESSION\td__Bacteria;l__Bacteria;k__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Yersinia;s__Yersinia pestis
+```
+
+`ACCESSION` is the reference accession in the BAM file. The taxonomy is separated by `;` and the taxonomic groups are separated by `__`. The taxonomic groups recognized by `dReads` in `--taxonomy-file` and `--rank` are:
+  - **domain**: `d__`
+  - **lineage**: `l__`
+  - **kingdom**: `k__`
+  - **phylum**: `p__`
+  - **class**: `c__`
+  - **order**: `o__`
+  - **family**: `f__`
+  - **genus**: `g__`
+  - **species**: `s__`
+
+> **Note**: The taxonomic groups are case sensitive and one can include as many as desired. For example, if one wants to extract the reads from the genus *Yersinia* and the class *Bacilli*, one would use `--rank '{"genus": "Yersinia", "class":"Bacilli"}`.
 
 
