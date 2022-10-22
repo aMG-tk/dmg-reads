@@ -21,11 +21,13 @@
 
 
 import logging
-from dmg_reads.utils import get_arguments, create_output_files
+
+from dmg_reads.utils import get_arguments, create_output_files, splitkeep, fast_flatten
 from dmg_reads.lib import load_mdmg_results, filter_damaged_taxa
+from dmg_reads.defaults import valid_ranks
+from dmg_reads.extract import get_read_by_taxa
 import pandas as pd
 import os
-from pathlib import Path
 import pysam
 import numpy as np
 from Bio import SeqIO, Seq, SeqRecord
@@ -33,6 +35,8 @@ import gzip
 from mimetypes import guess_type
 from functools import partial
 import tqdm
+from collections import defaultdict
+import re
 
 log = logging.getLogger("my_logger")
 
@@ -50,6 +54,14 @@ def main():
         logging.DEBUG if args.debug else logging.INFO
     )
 
+    # Check that rank and taxonomy file are both present
+    if args.rank and not args.taxonomy_file:
+        log.error("--rank requires --taxonomy")
+        exit(1)
+    if args.taxonomy_file and not args.rank:
+        log("Error: --taxonomy-file requires --rank")
+        exit(1)
+
     log.info("Loading metaDMG results...")
     mdmg_results = load_mdmg_results(args.metaDMG_results)
     # find which taxon are damaged
@@ -59,78 +71,175 @@ def main():
         filter_conditions=args.metaDMG_filter,
     )
 
-    refs = damaged_taxa["reference"].to_list()
-    logging.info(f"Loading BAM file")
+    if args.taxonomy_file:
+        log.info("Loading taxonomy data...")
+        refs_tax = defaultdict()
+        taxonomy = pd.read_csv(
+            args.taxonomy_file,
+            sep="\t",
+            header=None,
+            names=["reference", "taxonomy"],
+        )
+
+        # get get_ranks
+        ranks = {valid_ranks[x]: args.rank[x] for x in args.rank if x in valid_ranks}
+        # get refs that belong to this taxonomy
+        # loop over all rows
+        for i, row in tqdm.tqdm(
+            taxonomy.iterrows(),
+            total=taxonomy.shape[0],
+            desc="Taxa processed",
+            leave=False,
+        ):
+            taxs = row[1].split(";")
+            for r in taxs:
+                r1 = splitkeep(r, "__")
+                if r1[0] in ranks and ranks[r1[0]] == r1[1]:
+                    v = re.sub("[^0-9a-zA-Z]+", "_", r1[1])
+                    refs_tax[row[0]] = f"{r1[0]}{v}"
+                    # refs[row[0]] = f
+    else:
+        ranks = None
+
+    logging.info("Loading BAM file...")
     save = pysam.set_verbosity(0)
     bam = args.bam
     samfile = pysam.AlignmentFile(bam, "rb")
-
-    references = samfile.references
 
     chr_lengths = []
     for chrom in samfile.references:
         chr_lengths.append(samfile.get_reference_length(chrom))
     max_chr_length = np.max(chr_lengths)
-    pysam.set_verbosity(save)
-    ref_lengths = None
+
+    # Check if BAM files is not sorted by coordinates, sort it by coordinates
+    if not samfile.header["HD"]["SO"] == "coordinate":
+        log.info("BAM file is not sorted by coordinates, sorting it...")
+        sorted_bam = bam.replace(".bam", ".sorted.bam")
+        pysam.sort(
+            "-@", str(args.threads), "-m", str(args.sort_memory), "-o", sorted_bam, bam
+        )
+        bam = sorted_bam
+        samfile = pysam.AlignmentFile(bam, "rb")
+
     if not samfile.has_index():
-        logging.info(f"BAM index not found. Indexing...")
+        logging.info("BAM index not found. Indexing...")
         if max_chr_length > 536870912:
-            logging.info(f"A reference is longer than 2^29, indexing with csi")
+            logging.info("A reference is longer than 2^29, indexing with csi")
             pysam.index(bam, "-c")
         else:
-            pysam.index(bam)
-        logging.info(f"Reloading BAM file")
-        samfile = pysam.AlignmentFile(
-            bam, "rb"
-        )  # Need to reload the samfile after creating index
-    reads_damaged_seen = {}
-    reads_nondamaged_seen = {}
+            pysam.index(bam)  # Need to reload the samfile after creating index
+            log.info("Re-loading BAM file")
+            samfile = pysam.AlignmentFile(bam, "rb")
+    pysam.set_verbosity(save)
 
-    out_files = create_output_files(prefix=args.prefix, bam=args.bam)
-    encoding = guess_type(out_files["fastq_damaged"])[1]
-    _open = partial(gzip.open, mode="wt") if encoding == "gzip" else open
+    refs_bam = [
+        chrom.contig for chrom in samfile.get_index_statistics() if chrom.mapped > 0
+    ]
 
-    with _open(out_files["fastq_damaged"]) as dmg_fh, _open(
-        out_files["fastq_nondamaged"]
-    ) as non_dmg_fh:
-        for aln in tqdm.tqdm(
-            samfile.fetch(until_eof=True),
-            total=samfile.mapped,
-            leave=False,
-            ncols=80,
-            desc=f"Alignments processed",
-        ):
-            if aln.reference_name in refs:
-                if aln.qname not in reads_damaged_seen:
-                    reads_damaged_seen[aln.qname] = aln.qname
-                    seq = Seq.Seq(aln.seq)
-                    qual = aln.query_qualities
-                    if aln.is_reverse:
-                        seq = seq.reverse_complement()
-                        qual = qual[::-1]
-                    rec = SeqRecord.SeqRecord(seq, aln.qname, "", "")
-                    rec.letter_annotations["phred_quality"] = qual
-                    SeqIO.write(rec, dmg_fh, "fastq")
-            else:
-                if aln.qname not in reads_damaged_seen:
-                    reads_nondamaged_seen[aln.qname] = aln.qname
-                    seq = Seq.Seq(aln.seq)
-                    qual = aln.query_qualities
-                    if aln.is_reverse:
-                        seq = seq.reverse_complement()
-                        qual = qual[::-1]
-                    rec = SeqRecord.SeqRecord(seq, aln.qname, "", "")
-                    rec.letter_annotations["phred_quality"] = qual
-                    SeqIO.write(rec, non_dmg_fh, "fastq")
+    if args.taxonomy_file:
+        refs_damaged = set(refs_tax.keys()).intersection(
+            set(damaged_taxa["reference"].to_list())
+        )
+        refs_non_damaged = (
+            set(refs_tax.keys()).intersection(set(refs_bam)) - refs_damaged
+        )
+        if not refs_damaged and not refs_non_damaged:
+            log.info("No references found in BAM file")
+            exit(0)
+    else:
+        refs_damaged = damaged_taxa["reference"].to_list()
+        refs_non_damaged = set(refs_bam) - set(refs_damaged)
+        refs_tax = {ref: "all" for ref in refs_bam}
 
-    logging.info(
-        f"Extracted {len(reads_damaged_seen):,} damaged reads to {out_files['fastq_damaged']}"
+    if args.only_damaged:
+        refs = refs_damaged
+    else:
+        refs = fast_flatten([refs_non_damaged, refs_damaged])
+
+    out_files = create_output_files(prefix=args.prefix, bam=args.bam, taxon=ranks)
+
+    for file in out_files:
+        # file exists deleted
+        if os.path.exists(out_files[file]):
+            os.remove(out_files[file])
+
+    log.info("Processing reads...")
+
+    reads = get_read_by_taxa(
+        samfile=samfile, refs=refs, refs_tax=refs_tax, refs_damaged=refs_damaged
     )
-    logging.info(
-        f"Extracted {len(reads_nondamaged_seen):,} non-damaged reads to {out_files['fastq_nondamaged']}"
-    )
-    logging.info(f"Done!")
+    # write reads
+
+    count = defaultdict(int)
+    logging.info("Saving reads...")
+    if args.taxonomy_file:
+        desc = "Taxa processed"
+    else:
+        desc = "References processed"
+
+    for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
+        if args.taxonomy_file:
+            fastq_damaged = out_files[f"fastq_damaged_{tax}"]
+            fastq_nondamaged = out_files[f"fastq_nondamaged_{tax}"]
+            fastq_multi = out_files[f"fastq_multi_{tax}"]
+            fastq_combined = out_files[f"fastq_combined_{tax}"]
+        else:
+            fastq_damaged = out_files["fastq_damaged"]
+            fastq_nondamaged = out_files["fastq_nondamaged"]
+            fastq_multi = out_files["fastq_multi"]
+            fastq_combined = out_files["fastq_combined"]
+
+        encoding = guess_type(fastq_damaged)[1]
+        _open = partial(gzip.open, mode="at") if encoding == "gzip" else open
+        # TODO: clean this up
+        with _open(fastq_damaged) as f_damaged, _open(
+            fastq_nondamaged
+        ) as f_nondamaged, _open(fastq_multi) as f_multi, _open(
+            fastq_combined
+        ) as f_combined:
+            for read in tqdm.tqdm(
+                reads[tax],
+                ncols=80,
+                desc="Reads written",
+                leave=False,
+                total=len(reads[tax]),
+                ascii="░▒█",
+            ):
+                rec = SeqRecord.SeqRecord(reads[tax][read]["seq"], read, "", "")
+                rec.letter_annotations["phred_quality"] = reads[tax][read]["qual"]
+                if args.combine:
+                    SeqIO.write(rec, f_combined, "fastq")
+                    if args.taxonomy_file:
+                        count[out_files[f"fastq_combined_{tax}"]] += 1
+                    else:
+                        count[out_files["fastq_combined"]] += 1
+                else:
+                    if reads[tax][read]["is_damaged"] == "damaged":
+                        SeqIO.write(rec, f_damaged, "fastq")
+                        if args.taxonomy_file:
+                            count[out_files[f"fastq_damaged_{tax}"]] += 1
+                        else:
+                            count[out_files["fastq_damaged"]] += 1
+                    elif reads[tax][read]["is_damaged"] == "non-damaged":
+                        SeqIO.write(rec, f_nondamaged, "fastq")
+                        if args.taxonomy_file:
+                            count[out_files[f"fastq_nondamaged_{tax}"]] += 1
+                        else:
+                            count[out_files["fastq_nondamaged"]] += 1
+                    elif reads[tax][read]["is_damaged"] == "multi":
+                        SeqIO.write(rec, f_multi, "fastq")
+                        if args.taxonomy_file:
+                            count[out_files[f"fastq_multi_{tax}"]] += 1
+                        else:
+                            count[out_files["fastq_multi"]] += 1
+
+    for file in out_files:
+        if count[out_files[file]] and count[out_files[file]] > 0:
+            pass
+        else:
+            os.remove(out_files[file])
+
+    logging.info("Done!")
 
 
 if __name__ == "__main__":
