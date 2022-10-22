@@ -54,10 +54,9 @@ pip install -e .
 
 dReads will take a TSV file produced from [metaDMG](https://metadmg-dev.github.io/metaDMG-core/) and extract the reads from a BAM file. One can select a list of taxa and ranks to extract the reads from.
 
-```bash
 For a complete list of options:
 
-```
+```bash
 $ dReads --help
 usage: dReads [-h] -m METADMG_RESULTS -f METADMG_FILTER [-b BAM] [-p PREFIX] [--combine]
               [-T TAXONOMY_FILE] [-r RANK] [-M SORT_MEMORY] [-t THREADS] [--debug] [--version]
