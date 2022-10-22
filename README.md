@@ -92,17 +92,24 @@ optional arguments:
 One would run `dReads` as:
 
 ```bash
-dReads -m RISE505_MA873_L1.tp-mdmg.local.weight-1.csv.gz -b RISE505_MA873_L1.dedup.filtered.sorted.bam -f '{ "Bayesian_D_max": 0.1, "Bayesian_z": 2 }' --prefix RISE505_MA873_L1 --taxonomy-file gtdb-r202-organelles-viruses.tax.tsv --rank '{"genus": "Yersinia", "class":"Bacilli"}'
+dReads -m RISE505_MA873_L1.tp-mdmg.local.weight-1.csv.gz -b RISE505_MA873_L1.dedup.filtered.sorted.bam -f '{ "Bayesian_D_max": 0.1, "Bayesian_significance": 2 }' --prefix RISE505_MA873_L1 --taxonomy-file gtdb-r202-organelles-viruses.tax.tsv --rank '{"genus": "Yersinia", "class":"Bacilli"}
 ```
 
 The filter is a JSON object where the keys are one of the metaDMG results headers. If `--taxonomy-file` and `--rank` are set, the reads will be extracted from the selected taxonomic group and rank. If `--only-damaged` is set, only the damaged reads will be extracted. If `--combine` is set, the damaged and non-damaged reads will be combined in one fastq file.
 
-This will produce the following files:
+The previous command will produce the following files:
 
 ```bash
-├── 8e5a029071.damaged.fastq.gz 
-└── 8e5a029071.nondamaged.fastq.gz
+├── RISE505_MA873_L1.c__Bacilli.non-damaged.fastq.gz
+└── RISE505_MA873_L1.g__Yersinia.damaged.fastq.gz
 ```
+
+If the `--combine` and the `--only-damaged` flag are not set, `dReads` will might produce three files per taxa/rank or BAM file:
+
+- `*.damaged.fastq.gz`: The reads mapped to a reference that shows damage
+- `*.non-damaged.fastq.gz`: The reads mapped to a reference that does not show damage
+- `*.multi.fastq.gz`: The reads mapped to multiple references which are damaged and non-damaged
+
 
 
 
