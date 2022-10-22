@@ -25,10 +25,10 @@ Then we proceed to install using pip:
 pip install dmg-reads
 ```
 
-### Using conda
+### Using mamba
 
 ```bash
-conda install -c conda-forge -c bioconda -c genomewalker dmg-reads
+mamba install -c conda-forge -c bioconda -c genomewalker dmg-reads
 ```
 
 ### Install from source to use the development version
