@@ -187,6 +187,7 @@ help_msg = {
     "taxonomy_file": "A file containing the taxonomy of the BAM references in the format d__;p__;c__;o__;f__;g__;s__.",
     "rank": "Which taxonomic group and rank we want to get the reads extracted.",
     "combine": "If set, the reads damaged and non-damaged will be combined in one fastq file",
+    "only_damaged": "If set, only the reads damaged will be extracted",
     "sort_memory": "Set maximum memory per thread for sorting; suffix K/M/G recognized",
     "threads": "Number of threads",
     "debug": "Print debug messages",
@@ -232,6 +233,12 @@ def get_arguments(argv=None):
     )
     parser.add_argument(
         "--combine", dest="combine", action="store_true", help=help_msg["combine"]
+    )
+    parser.add_argument(
+        "--only-damaged",
+        dest="only_damaged",
+        action="store_true",
+        help=help_msg["only_damaged"],
     )
     parser.add_argument(
         "-T",
@@ -293,14 +300,13 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
     if taxon is None:
         if combined:
             out_files = {
-                "fastq_damaged": f"{prefix}.damaged.fastq.gz",
-                "fastq_nondamaged": f"{prefix}.non-damaged.fastq.gz",
-                "fastq_multi": f"{prefix}.multi.fastq.gz",
                 "fastq_combined": f"{prefix}.fastq.gz",
             }
         else:
             out_files = {
-                "stats": f"{prefix}_stats.tsv.gz",
+                "fastq_damaged": f"{prefix}.damaged.fastq.gz",
+                "fastq_nondamaged": f"{prefix}.non-damaged.fastq.gz",
+                "fastq_multi": f"{prefix}.multi.fastq.gz",
                 "fastq_combined": f"{prefix}.fastq.gz",
             }
     else:
