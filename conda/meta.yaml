@@ -32,6 +32,6 @@ test:
 
 about:
   home: https://github.com/genomewalker/dmg-reads
-  summary: "A simple tool to filter BLASTx m8 files using the FAMLI algorithm"
+  summary: "A simple tool to extract damaged reads from BAM files"
   license: {{ setup_data['license'] }}
   license_file: LICENSE
