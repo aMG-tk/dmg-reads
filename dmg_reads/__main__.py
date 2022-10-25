@@ -114,7 +114,7 @@ def main():
     # Check if BAM files is not sorted by coordinates, sort it by coordinates
     if not samfile.header["HD"]["SO"] == "coordinate":
         log.info("BAM file is not sorted by coordinates, sorting it...")
-        sorted_bam = bam.replace(".bam", ".sorted.bam")
+        sorted_bam = bam.replace(".bam", ".dr-sorted.bam")
         pysam.sort(
             "-@", str(args.threads), "-m", str(args.sort_memory), "-o", sorted_bam, bam
         )
