@@ -3,7 +3,7 @@ import versioneer
 
 requirements = [
     "pandas>=1.4.2",
-    "tqdm==4.50.0",
+    "tqdm==4.61.1",
     "pysam>=0.17.0",
     "numpy>=1.21.2",
     "biopython>=1.79",
