@@ -81,6 +81,10 @@ mdmg_header = [
     "Bayesian_phi_std",
     "Bayesian_rho_Ac",
     "Bayesian_significance",
+    "damage",
+    "MAP_damage",
+    "significance",
+    "MAP_significance",
 ]
 
 valid_ranks = {
