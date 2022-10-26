@@ -94,7 +94,7 @@ def main():
             taxs = row[1].split(";")
             for r in taxs:
                 r1 = splitkeep(r, "__")
-                if r1[0] in ranks and ranks[r1[0]] == r1[1]:
+                if r1[0] in ranks and r1[1] in ranks[r1[0]]:
                     v = re.sub("[^0-9a-zA-Z]+", "_", r1[1])
                     refs_tax[row[0]] = f"{r1[0]}{v}"
                     # refs[row[0]] = f

@@ -313,18 +313,20 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
         if combined:
             out_files = defaultdict()
             for k, v in taxon.items():
-                v = re.sub("[^0-9a-zA-Z]+", "_", v)
-                out_files[f"fastq_{k}{v}"] = f"{prefix}.{k}{v}.fastq.gz"
+                for i in v:
+                    i = re.sub("[^0-9a-zA-Z]+", "_", i)
+                    out_files[f"fastq_{k}{i}"] = f"{prefix}.{k}{i}.fastq.gz"
         else:
             out_files = defaultdict()
             for k, v in taxon.items():
-                v = re.sub("[^0-9a-zA-Z]+", "_", v)
-                out_files[f"fastq_damaged_{k}{v}"] = f"{prefix}.{k}{v}.damaged.fastq.gz"
-                out_files[
-                    f"fastq_nondamaged_{k}{v}"
-                ] = f"{prefix}.{k}{v}.non-damaged.fastq.gz"
-                out_files[f"fastq_multi_{k}{v}"] = f"{prefix}.{k}{v}.multi.fastq.gz"
-                out_files[f"fastq_combined_{k}{v}"] = f"{prefix}.{k}{v}.fastq.gz"
+                for i in v:
+                    i = re.sub("[^0-9a-zA-Z]+", "_", i)
+                    out_files[f"fastq_damaged_{k}{i}"] = f"{prefix}.{k}{i}.damaged.fastq.gz"
+                    out_files[
+                        f"fastq_nondamaged_{k}{i}"
+                    ] = f"{prefix}.{k}{i}.non-damaged.fastq.gz"
+                    out_files[f"fastq_multi_{k}{i}"] = f"{prefix}.{k}{i}.multi.fastq.gz"
+                    out_files[f"fastq_combined_{k}{i}"] = f"{prefix}.{k}{i}.fastq.gz"
     return out_files
 
 
