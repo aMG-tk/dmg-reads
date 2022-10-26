@@ -173,7 +173,7 @@ def get_ranks(parser, ranks, var):
 
 
 defaults = {
-    "metaDMG_filter": {"Bayesian_D_max": 0.1, "Bayesian_z": 2.5},
+    "metaDMG_filter": {"damage": 0.1, "significance": 2},
     "prefix": None,
     "sort_memory": "1G",
     "threads": 1,

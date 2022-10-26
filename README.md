@@ -91,7 +91,7 @@ optional arguments:
 One would run `dReads` as:
 
 ```bash
-dReads -m RISE505_MA873_L1.tp-mdmg.local.weight-1.csv.gz -b RISE505_MA873_L1.dedup.filtered.sorted.bam -f '{ "Bayesian_D_max": 0.1, "Bayesian_z": 2 }' --prefix RISE505_MA873_L1 --taxonomy-file gtdb-r202-organelles-viruses.tax.tsv --rank '{"genus": "Yersinia", "class":"Bacilli"}
+dReads -m RISE505_MA873_L1.tp-mdmg.local.weight-1.csv.gz -b RISE505_MA873_L1.dedup.filtered.sorted.bam -f '{ "damage": 0.1, "significance": 2 }' --prefix RISE505_MA873_L1 --taxonomy-file gtdb-r202-organelles-viruses.tax.tsv --rank '{"genus": "Yersinia", "class":"Bacilli"}
 ```
 
 The filter is a JSON object where the keys are one of the metaDMG results headers. If `--taxonomy-file` and `--rank` are set, the reads will be extracted from the selected taxonomic group and rank. If `--only-damaged` is set, only the damaged reads will be extracted. If `--combine` is set, the damaged, non-damaged and multi-mapped reads will be combined in one fastq file.
