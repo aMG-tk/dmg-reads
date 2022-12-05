@@ -38,8 +38,7 @@ import tqdm
 from collections import defaultdict
 import re
 
-import cProfile as profile
-import pstats
+
 
 log = logging.getLogger("my_logger")
 
@@ -136,8 +135,7 @@ def main():
             log.info("Re-loading BAM file")
             samfile = pysam.AlignmentFile(bam, "rb")
     pysam.set_verbosity(save)
-    prof = profile.Profile()
-    prof.enable()
+
     refs_bam = [
         chrom.contig for chrom in samfile.get_index_statistics() if chrom.mapped > 0
     ]
@@ -246,12 +244,6 @@ def main():
             os.remove(out_files[file])
 
     logging.info("Done!")
-
-    prof.disable()
-    # print profiling output
-    stats = pstats.Stats(prof).strip_dirs().sort_stats("tottime")
-    stats.print_stats(10)  # top 10 rows
-
 
 if __name__ == "__main__":
     main()

@@ -5,13 +5,15 @@ import pandas as pd
 import pysam
 from Bio import SeqIO, Seq, SeqRecord
 import logging
-
+import cProfile as profile
+import pstats
 
 log = logging.getLogger("my_logger")
 
 
 def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
-
+    prof = profile.Profile()
+    prof.enable()
     reads = defaultdict(lambda: defaultdict(dict))
 
     for reference in tqdm.tqdm(
@@ -53,6 +55,11 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
                     "qual": qual,
                     "is_damaged": is_damaged,
                 }
+
+    prof.disable()
+    # print profiling output
+    stats = pstats.Stats(prof).strip_dirs().sort_stats("cumtime")
+    stats.print_stats(10)  # top 10 rows
 
     samfile.close()
     return reads
