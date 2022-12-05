@@ -172,8 +172,13 @@ def main():
 
     log.info("Processing reads...")
 
+    refs_sorted = [x for x in samfile.references if x in refs]
     reads = get_read_by_taxa(
-        samfile=samfile, refs=refs, refs_tax=refs_tax, refs_damaged=refs_damaged, ref_bam_dict=ref_bam_dict
+        samfile=samfile,
+        refs=refs_sorted,
+        refs_tax=refs_tax,
+        refs_damaged=refs_damaged,
+        ref_bam_dict=ref_bam_dict,
     )
     # write reads
 
