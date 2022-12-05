@@ -23,7 +23,7 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
         desc="References processed",
     ):
         for aln in samfile.fetch(
-            reference=reference, multiple_iterators=False, until_eof=True
+            reference=reference, multiple_iterators=False, until_eof=False
         ):
             # create read
             # Check if reference is damaged
