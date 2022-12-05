@@ -24,9 +24,9 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
     ):
         for aln in tqdm.tqdm(
             samfile.fetch(
-                reference=reference, multiple_iterators=False, until_eof=True
+                reference=reference[0], multiple_iterators=False, until_eof=True
             ),
-            total=samfile.count(reference=reference),
+            total=reference[1],
             ncols=80,
             ascii="░▒█",
             leave=False,
@@ -39,7 +39,7 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
             is_damaged = "non-damaged"
             if aln_reference_name in refs_damaged:
                 is_damaged = "damaged"
-                
+
             if reads[refs_tax[aln_reference_name]][aln_qname]:
                 dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
                 if dmg == is_damaged:

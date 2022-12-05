@@ -140,8 +140,6 @@ def main():
         for chrom in samfile.get_index_statistics()
         if chrom.mapped > 0
     ]
-    print(refs_bam)
-    exit()
     if args.taxonomy_file:
         refs_damaged = set(refs_tax.keys()).intersection(
             set(damaged_taxa["reference"].to_list())
