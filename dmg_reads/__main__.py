@@ -39,7 +39,6 @@ from collections import defaultdict
 import re
 
 
-
 log = logging.getLogger("my_logger")
 
 
@@ -137,9 +136,12 @@ def main():
     pysam.set_verbosity(save)
 
     refs_bam = [
-        chrom.contig for chrom in samfile.get_index_statistics() if chrom.mapped > 0
+        (chrom.contig, chrom.mapped)
+        for chrom in samfile.get_index_statistics()
+        if chrom.mapped > 0
     ]
-
+    print(refs_bam)
+    exit()
     if args.taxonomy_file:
         refs_damaged = set(refs_tax.keys()).intersection(
             set(damaged_taxa["reference"].to_list())
@@ -244,6 +246,7 @@ def main():
             os.remove(out_files[file])
 
     logging.info("Done!")
+
 
 if __name__ == "__main__":
     main()

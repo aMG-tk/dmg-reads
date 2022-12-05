@@ -36,10 +36,10 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
             # Check if reference is damaged
             aln_reference_name = aln.reference_name
             aln_qname = aln.qname
+            is_damaged = "non-damaged"
             if aln_reference_name in refs_damaged:
                 is_damaged = "damaged"
-            else:
-                is_damaged = "non-damaged"
+                
             if reads[refs_tax[aln_reference_name]][aln_qname]:
                 dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
                 if dmg == is_damaged:
