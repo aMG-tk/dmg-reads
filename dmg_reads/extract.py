@@ -62,7 +62,7 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
 
     prof.disable()
     # print profiling output
-    stats = pstats.Stats(prof).strip_dirs().sort_stats("cumtime")
+    stats = pstats.Stats(prof).sort_stats("cumtime")
     stats.print_stats(10)  # top 10 rows
 
     samfile.close()
