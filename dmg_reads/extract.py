@@ -11,7 +11,7 @@ import pstats
 log = logging.getLogger("my_logger")
 
 
-def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
+def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
     prof = profile.Profile()
     prof.enable()
     reads = defaultdict(lambda: defaultdict(dict))
@@ -24,9 +24,9 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged):
     ):
         for aln in tqdm.tqdm(
             samfile.fetch(
-                reference=reference[0], multiple_iterators=False, until_eof=True
+                reference=reference, multiple_iterators=False, until_eof=True
             ),
-            total=reference[1],
+            total=ref_bam_dict[reference],
             ncols=80,
             ascii="░▒█",
             leave=False,

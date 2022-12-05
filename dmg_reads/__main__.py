@@ -134,12 +134,15 @@ def main():
             log.info("Re-loading BAM file")
             samfile = pysam.AlignmentFile(bam, "rb")
     pysam.set_verbosity(save)
-
-    refs_bam = [
-        (chrom.contig, chrom.mapped)
+    ref_bam_dict = {
+        chrom.contig: chrom.mapped
         for chrom in samfile.get_index_statistics()
         if chrom.mapped > 0
+    }
+    refs_bam = [
+        chrom.contig for chrom in samfile.get_index_statistics() if chrom.mapped > 0
     ]
+
     if args.taxonomy_file:
         refs_damaged = set(refs_tax.keys()).intersection(
             set(damaged_taxa["reference"].to_list())
@@ -170,7 +173,7 @@ def main():
     log.info("Processing reads...")
 
     reads = get_read_by_taxa(
-        samfile=samfile, refs=refs, refs_tax=refs_tax, refs_damaged=refs_damaged
+        samfile=samfile, refs=refs, refs_tax=refs_tax, refs_damaged=refs_damaged, ref_bam_dict=ref_bam_dict
     )
     # write reads
 
