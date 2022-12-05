@@ -22,19 +22,12 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
         leave=False,
         desc="References processed",
     ):
-        for aln in tqdm.tqdm(
-            samfile.fetch(
+        for aln in samfile.fetch(
                 reference=reference, multiple_iterators=False, until_eof=True
-            ),
-            total=ref_bam_dict[reference],
-            ncols=80,
-            ascii="░▒█",
-            leave=False,
-            desc="Alignments processed",
-        ):
+            ):
             # create read
             # Check if reference is damaged
-            aln_reference_name = aln.reference_name
+            aln_reference_name = reference
             aln_qname = aln.qname
             is_damaged = "non-damaged"
             if aln_reference_name in refs_damaged:
