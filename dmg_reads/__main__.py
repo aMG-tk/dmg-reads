@@ -208,14 +208,7 @@ def main():
         ) as f_nondamaged, _open(fastq_multi) as f_multi, _open(
             fastq_combined
         ) as f_combined:
-            for read in tqdm.tqdm(
-                reads[tax],
-                ncols=80,
-                desc="Reads written",
-                leave=False,
-                total=len(reads[tax]),
-                ascii="░▒█",
-            ):
+            for read in reads[tax]:
                 rec = SeqRecord.SeqRecord(reads[tax][read]["seq"], read, "", "")
                 rec.letter_annotations["phred_quality"] = reads[tax][read]["qual"]
                 if args.combine:
