@@ -110,7 +110,7 @@ def get_read_by_taxa(
         )
     else:
         p = Pool(
-            threads, initializer=initializer, initargs=(params, refs_damaged, refs_tax)
+            threads, initializer=initializer, initargs=([params, refs_damaged, refs_tax],)
         )
 
         data = list(
