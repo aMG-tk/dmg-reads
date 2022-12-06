@@ -332,8 +332,6 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
         else:
             out_files = defaultdict()
             for k, v in taxon.items():
-                print(k)
-                print(v)
                 for i in v:
                     r = splitkeep(i, "__")
                     i = re.sub("[^0-9a-zA-Z]+", "_", r[1])
