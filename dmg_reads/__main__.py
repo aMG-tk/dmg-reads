@@ -194,7 +194,7 @@ def main():
         run_tqdm = False
     else:
         run_tqdm = True
-
+    print(run_tqdm)
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
         if args.taxonomy_file:
             fastq_damaged = out_files[f"fastq_damaged_{tax}"]
