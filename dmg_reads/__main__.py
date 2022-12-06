@@ -30,7 +30,7 @@ import pandas as pd
 import os
 import pysam
 import numpy as np
-from Bio import SeqIO, Seq, SeqRecord
+from Bio import SeqIO, SeqRecord
 import gzip
 from mimetypes import guess_type
 from functools import partial

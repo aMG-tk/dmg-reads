@@ -1,24 +1,16 @@
-from wsgiref.util import request_uri
 import tqdm
-import pandas as pd
 import pysam
-from Bio import SeqIO, Seq, SeqRecord
+from Bio import Seq
 import logging
-from multiprocessing import Pool, Lock
-from multiprocessing.managers import BaseManager, DictProxy
+from multiprocessing import Pool
 from collections import defaultdict
 from functools import partial
-
 from dmg_reads.utils import is_debug, calc_chunksize, initializer
 
-import cProfile as profile
-import pstats
+# import cProfile as profile
+# import pstats
 
 log = logging.getLogger("my_logger")
-
-
-def ddict():
-    return defaultdict(lambda: defaultdict(dict))
 
 
 def get_alns(params, refs_tax, refs_damaged, threads=1):
@@ -31,7 +23,6 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
         for aln in samfile.fetch(
             contig=reference, multiple_iterators=False, until_eof=True
         ):
-
             # create read
             # Check if reference is damaged
             aln_reference_name = reference
@@ -79,37 +70,6 @@ def merge_dicts(dicts):
                 else:
                     reads[tax][read] = read_info
     return dict(reads)
-
-    # # create read
-    # # Check if reference is damaged
-    # aln_reference_name = reference
-    # aln_qname = aln.qname
-    # is_damaged = "non-damaged"
-    # if aln_reference_name in refs_damaged:
-    #     is_damaged = "damaged"
-
-    # if reads[refs_tax[aln_reference_name]][aln_qname]:
-    #     dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
-    #     if dmg == is_damaged:
-    #         continue
-    #     else:
-    #         reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"] = "multi"
-    # else:
-    #     seq = Seq.Seq(aln.seq)
-    #     qual = aln.query_qualities
-    #     if aln.is_reverse:
-    #         seq = seq.reverse_complement()
-    #         qual = qual[::-1]
-    #     reads[refs_tax[aln_reference_name]][aln_qname] = {
-    #         "seq": seq,
-    #         "qual": qual,
-    #         "is_damaged": is_damaged,
-    #     }
-
-
-def init_pool(the_lock):
-    global lock
-    lock = the_lock
 
 
 def get_read_by_taxa(
@@ -174,6 +134,6 @@ def get_read_by_taxa(
     # # print profiling output
     # stats = pstats.Stats(prof).sort_stats("tottime")
     # stats.print_stats(10)
-    log.info("Merging chunks...")
+    log.info(f"Merging {len(ref_chunks)} chunks...")
     data = merge_dicts(data)  # top 10 rows
     return data
