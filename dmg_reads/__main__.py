@@ -179,7 +179,7 @@ def main():
         refs_damaged=refs_damaged,
         ref_bam_dict=ref_bam_dict,
         threads=args.threads,
-        chunksize=args.chunksize,
+        chunksize=args.chunk_size,
     )
     # write reads
 
