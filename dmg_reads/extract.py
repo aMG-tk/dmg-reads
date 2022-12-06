@@ -123,7 +123,7 @@ def get_read_by_taxa(
     else:
         c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
 
-    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)][0:5]
+    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
 
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
