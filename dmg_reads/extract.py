@@ -113,7 +113,7 @@ def get_read_by_taxa(
 
         for chunk in tqdm.tqdm(
             params,
-            total=len(params),
+            total=len(ref_chunks),
             leave=False,
             ncols=80,
             desc="References processed",
