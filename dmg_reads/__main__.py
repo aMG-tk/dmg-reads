@@ -190,10 +190,10 @@ def main():
     else:
         desc = "References processed"
 
-    if len(reads) > 1:
-        run_tqdm = True
+    if len(reads) > 3:
+        disable_tqdm = True
     else:
-        run_tqdm = False
+        disable_tqdm = False
 
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
         if args.taxonomy_file:
@@ -222,7 +222,7 @@ def main():
                 leave=False,
                 total=len(reads[tax]),
                 ascii="░▒█",
-                disable=run_tqdm,
+                disable=disable_tqdm,
             ):
                 rec = SeqRecord.SeqRecord(reads[tax][read]["seq"], read, "", "")
                 rec.letter_annotations["phred_quality"] = reads[tax][read]["qual"]
