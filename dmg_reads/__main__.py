@@ -97,6 +97,7 @@ def main():
                 r1 = splitkeep(r, "__")
                 if r1[0] in ranks:
                     for x in ranks[r1[0]]:
+                        print(x)
                         if r1[1] == x:
                             print(r1[0])
                             print(r1[1])
