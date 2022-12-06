@@ -90,10 +90,6 @@ def get_read_by_taxa(
 
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
-    mgr = MyManager()
-    mgr.start()
-    reads = mgr.ddict()
-
     if is_debug():
         data = list(
             map(
@@ -139,5 +135,6 @@ def get_read_by_taxa(
     prof.disable()
     # print profiling output
     stats = pstats.Stats(prof).sort_stats("tottime")
-    stats.print_stats(10)  # top 10 rows
-    return reads
+    stats.print_stats(10)
+    exit()  # top 10 rows
+    return data
