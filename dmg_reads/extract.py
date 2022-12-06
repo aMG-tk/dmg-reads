@@ -111,26 +111,23 @@ def get_read_by_taxa(
         lock = Lock()
         p = Pool(threads, initializer=init_pool, initargs=(lock,))
 
-        data = list(
-            tqdm.tqdm(
-                p.imap_unordered(
-                    partial(
-                        get_alns,
-                        bam=bam,
-                        reads=reads,
-                        refs_tax=refs_tax,
-                        refs_damaged=refs_damaged,
-                        threads=threads,
-                    ),
-                    params,
-                    chunksize=1,
-                ),
-                total=len(ref_chunks),
-                leave=False,
-                ncols=80,
-                desc="References processed",
-            )
-        )
+        for chunk in tqdm.tqdm(
+            params,
+            total=len(params),
+            leave=False,
+            ncols=80,
+            desc="References processed",
+        ):
+            p.apply_async(
+                get_alns(
+                    params=chunk,
+                    bam=bam,
+                    reads=reads,
+                    refs_tax=refs_tax,
+                    refs_damaged=refs_damaged,
+                    threads=threads,
+                )
+            ),
 
     p.close()
     p.join()
