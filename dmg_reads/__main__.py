@@ -96,15 +96,11 @@ def main():
             for r in taxs:
                 r1 = splitkeep(r, "__")
                 if r1[0] in ranks and any(r == x for x in ranks[r1[0]]):
-                    print(r1[0])
-                    print(r1[1])
                     v = re.sub("[^0-9a-zA-Z]+", "_", r1[1])
                     refs_tax[row[0]] = f"{r1[0]}{v}"
                     # refs[row[0]] = f
     else:
         ranks = None
-    print(refs_tax)
-    exit()
     logging.info("Loading BAM file...")
     save = pysam.set_verbosity(0)
     bam = args.bam
