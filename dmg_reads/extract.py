@@ -82,7 +82,7 @@ def get_read_by_taxa(
     mgr = MyManager()
     mgr.start()
     reads = mgr.ddict()
-
+    print(threads)
     if is_debug():
         data = list(
             map(
