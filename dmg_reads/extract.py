@@ -17,19 +17,12 @@ import pstats
 log = logging.getLogger("my_logger")
 
 
-class MyManager(BaseManager):
-    pass
-
-
 def ddict():
     return defaultdict(lambda: defaultdict(dict))
 
 
-MyManager.register("ddict", ddict, DictProxy)
-
-
 def get_alns(params, refs_tax, refs_damaged, threads=1):
-    reads = defaultdict(lambda: defaultdict(dict))
+    reads = ddict()
     bam, references = params
 
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
