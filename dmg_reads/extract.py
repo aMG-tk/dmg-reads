@@ -64,8 +64,21 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
 
 
 def merge_dicts(dicts):
-    pass
-    # d = defaultdict(lambda: defaultdict(dict))
+
+    reads = defaultdict(lambda: defaultdict(dict))
+
+    for d in dicts:
+        for tax, tax_reads in d.items():
+            for read, read_info in tax_reads.items():
+                if reads[tax][read]:
+                    dmg = reads[tax][read]["is_damaged"]
+                    if dmg == read_info["is_damaged"]:
+                        continue
+                    else:
+                        reads[tax][read]["is_damaged"] = "multi"
+                else:
+                    reads[tax][read] = read_info
+    return dict(reads)
 
     # # create read
     # # Check if reference is damaged
@@ -158,6 +171,5 @@ def get_read_by_taxa(
     # # print profiling output
     # stats = pstats.Stats(prof).sort_stats("tottime")
     # stats.print_stats(10)
-    print(data)
-    exit()  # top 10 rows
+    data = merge_dicts(data)  # top 10 rows
     return data
