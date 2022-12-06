@@ -84,7 +84,6 @@ def main():
 
         # get get_ranks
         ranks = {valid_ranks[x]: args.rank[x] for x in args.rank if x in valid_ranks}
-        print(ranks)
         # get refs that belong to this taxonomy
         # loop over all rows
         for i, row in tqdm.tqdm(
@@ -96,7 +95,7 @@ def main():
             taxs = row[1].split(";")
             for r in taxs:
                 r1 = splitkeep(r, "__")
-                if r1[0] in ranks and r1[1] in ranks[r1[0]]:
+                if r1[0] in ranks and any(r1[1] == x for x in ranks[r1[0]]):
                     print(r1[0])
                     print(r1[1])
                     v = re.sub("[^0-9a-zA-Z]+", "_", r1[1])
