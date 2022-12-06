@@ -83,6 +83,15 @@ def main():
         )
 
         # get get_ranks
+        ranks = defaultdict(list)
+        for x in args.rank:
+            if x in valid_ranks:
+                # append to the list
+                ranks[valid_ranks[x]].append(args.rank[x])
+
+        print(ranks)
+        exit()
+
         ranks = {valid_ranks[x]: args.rank[x] for x in args.rank if x in valid_ranks}
         print(ranks)
         # get refs that belong to this taxonomy
