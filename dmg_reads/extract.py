@@ -140,6 +140,9 @@ def get_read_by_taxa(
             )
         )
     else:
+        logging.info(
+            f"Processing {len(ref_chunks):,} chunks of {c_size:,} references each"
+        )
         p = Pool(
             threads,
             initializer=initializer,
@@ -171,5 +174,6 @@ def get_read_by_taxa(
     # # print profiling output
     # stats = pstats.Stats(prof).sort_stats("tottime")
     # stats.print_stats(10)
+    log.info("Merging chunks...")
     data = merge_dicts(data)  # top 10 rows
     return data
