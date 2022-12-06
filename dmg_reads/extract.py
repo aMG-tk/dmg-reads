@@ -9,7 +9,7 @@ from multiprocessing.managers import BaseManager, DictProxy
 from collections import defaultdict
 from functools import partial
 
-from dmg_reads.utils import is_debug, calc_chunksize, initializer
+from dmg_reads.utils import is_debug, initializer
 
 # import cProfile as profile
 # import pstats
