@@ -85,8 +85,6 @@ def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1)
 
         p = Pool(
             threads,
-            initializer=initializer,
-            initargs=([refs_tax, refs_damaged],),
         )
 
         data = list(
