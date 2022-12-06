@@ -157,14 +157,15 @@ def main():
         refs_damaged = damaged_taxa["reference"].to_list()
         refs_non_damaged = set(refs_bam) - set(refs_damaged)
         refs_tax = {ref: "all" for ref in refs_bam}
-
+    print(refs_tax)
     if args.only_damaged:
         refs = refs_damaged
     else:
         refs = fast_flatten([refs_non_damaged, refs_damaged])
 
     out_files = create_output_files(prefix=args.prefix, bam=args.bam, taxon=ranks)
-
+    print(out_files)
+    exit()
     for file in out_files:
         # file exists deleted
         if os.path.exists(out_files[file]):
