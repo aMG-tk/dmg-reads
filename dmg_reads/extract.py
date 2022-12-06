@@ -141,7 +141,7 @@ def get_read_by_taxa(
         )
     else:
         logging.info(
-            f"Processing {len(ref_chunks):,} chunks of {c_size:,} references each"
+            f"Processing {len(ref_chunks):,} chunks of {c_size:,} references each..."
         )
         p = Pool(
             threads,
