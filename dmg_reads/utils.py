@@ -145,7 +145,6 @@ def is_valid_rank(parser, arg, var):
                 f"argument {var}: Invalid value {key}.\n"
                 f"Valid values are: {convert_list_to_str(valid_ranks)}"
             )
-    print(arg)
     return arg
 
 
