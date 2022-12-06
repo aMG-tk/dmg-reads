@@ -108,6 +108,7 @@ def get_read_by_taxa(
             )
         )
     else:
+        lock = Lock()
         p = Pool(threads, initializer=init_pool, initargs=(lock,))
 
         data = list(
