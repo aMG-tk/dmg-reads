@@ -190,6 +190,11 @@ def main():
     else:
         desc = "References processed"
 
+    if len(reads) > 1:
+        run_tqdm = False
+    else:
+        run_tqdm = True
+
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
         if args.taxonomy_file:
             fastq_damaged = out_files[f"fastq_damaged_{tax}"]
@@ -210,7 +215,15 @@ def main():
         ) as f_nondamaged, _open(fastq_multi) as f_multi, _open(
             fastq_combined
         ) as f_combined:
-            for read in reads[tax]:
+            for read in tqdm.tqdm(
+                reads[tax],
+                ncols=80,
+                desc="Reads written",
+                leave=False,
+                total=len(reads[tax]),
+                ascii="░▒█",
+                disable=run_tqdm,
+            ):
                 rec = SeqRecord.SeqRecord(reads[tax][read]["seq"], read, "", "")
                 rec.letter_annotations["phred_quality"] = reads[tax][read]["qual"]
                 if args.combine:
