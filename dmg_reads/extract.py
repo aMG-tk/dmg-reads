@@ -22,7 +22,7 @@ def ddict():
 
 
 def get_alns(params, refs_tax, refs_damaged, threads=1):
-    reads = ddict()
+    reads = defaultdict(lambda: defaultdict(dict))
     bam, references = params
 
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
@@ -60,7 +60,7 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
                     "is_damaged": is_damaged,
                 }
     samfile.close()
-    return reads
+    return dict(reads)
 
 
 def init_pool(the_lock):
