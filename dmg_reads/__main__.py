@@ -132,7 +132,7 @@ def main():
                 bam, "-@", str(args.threads)
             )  # Need to reload the samfile after creating index
             log.info("Re-loading BAM file")
-            samfile = pysam.AlignmentFile(bam, "rb", thread=args.threads)
+            samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
     pysam.set_verbosity(save)
     ref_bam_dict = {
         chrom.contig: chrom.mapped
