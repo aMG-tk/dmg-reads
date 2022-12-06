@@ -177,6 +177,7 @@ defaults = {
     "prefix": None,
     "sort_memory": "1G",
     "threads": 1,
+    "chunk_size": None,
 }
 
 help_msg = {
@@ -189,6 +190,7 @@ help_msg = {
     "combine": "If set, the reads damaged and non-damaged will be combined in one fastq file",
     "only_damaged": "If set, only the reads damaged will be extracted",
     "sort_memory": "Set maximum memory per thread for sorting; suffix K/M/G recognized",
+    "chunk_size": "Chunk size for parallel processing",
     "threads": "Number of threads",
     "debug": "Print debug messages",
     "version": "Print program version",
@@ -271,6 +273,15 @@ def get_arguments(argv=None):
         dest="threads",
         default=1,
         help=help_msg["threads"],
+    )
+    parser.add_argument(
+        "--chunk-size",
+        type=lambda x: int(
+            check_values(x, minval=1, maxval=100000, parser=parser, var="--chunk-size")
+        ),
+        default=defaults["chunk_size"],
+        dest="chunk_size",
+        help=help_msg["chunk_size"],
     )
     parser.add_argument(
         "--debug", dest="debug", action="store_true", help=help_msg["debug"]

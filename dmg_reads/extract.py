@@ -81,8 +81,8 @@ def get_read_by_taxa(
         c_size = chunksize
     else:
         c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
+
     ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
-    params = zip([bam] * len(ref_chunks), ref_chunks)
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
     if is_debug():
@@ -121,7 +121,7 @@ def get_read_by_taxa(
                     params,
                     chunksize=1,
                 ),
-                total=len(refs),
+                total=len(chunksize),
                 leave=False,
                 ncols=80,
                 desc="References processed",
@@ -131,6 +131,7 @@ def get_read_by_taxa(
     pool.close()
     pool.join()
 
+    print(reads)
     # prof.disable()
     # # print profiling output
     # stats = pstats.Stats(prof).sort_stats("tottime")
