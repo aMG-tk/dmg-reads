@@ -119,7 +119,8 @@ def get_read_by_taxa(
             desc="References processed",
         ):
             p.apply_async(
-                get_alns(
+                partial(
+                    get_alns,
                     params=chunk,
                     bam=bam,
                     reads=reads,
