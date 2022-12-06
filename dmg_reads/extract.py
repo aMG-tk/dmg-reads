@@ -35,10 +35,11 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
 
     for reference in references:
-        for aln in samfile.fetch(
-            contig=reference, multiple_iterators=False, until_eof=True
-        ):
-            with lock:
+        with lock:
+            for aln in samfile.fetch(
+                contig=reference, multiple_iterators=False, until_eof=True
+            ):
+
                 # create read
                 # Check if reference is damaged
                 aln_reference_name = reference
