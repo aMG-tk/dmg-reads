@@ -21,7 +21,11 @@ class MyManager(BaseManager):
     pass
 
 
-MyManager.register("defaultdict", defaultdict, DictProxy)
+def ddict():
+    return defaultdict(ddict)
+
+
+MyManager.register("ddict", ddict, DictProxy)
 
 
 def get_alns(reference, bam, reads, refs_tax, refs_damaged):
@@ -66,7 +70,7 @@ def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1)
     pool = Pool(processes=threads)
     mgr = MyManager()
     mgr.start()
-    reads = mgr.defaultdict(lambda: defaultdict(dict))
+    reads = mgr.ddict()
 
     if is_debug():
         data = list(
