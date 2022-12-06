@@ -29,8 +29,11 @@ MyManager.register("ddict", ddict, DictProxy)
 
 
 def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
+
     bam, references = params
+
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
+
     for reference in references:
         for aln in samfile.fetch(
             contig=reference, multiple_iterators=False, until_eof=True
@@ -77,6 +80,7 @@ def get_read_by_taxa(
         c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
 
     ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
+    print(ref_chunks)
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
     mgr = MyManager()
