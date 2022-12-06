@@ -28,7 +28,7 @@ def ddict():
 MyManager.register("ddict", ddict, DictProxy)
 
 
-def get_alns(params, bam, refs_tax, refs_damaged, threads=1):
+def get_alns(params, refs_tax, refs_damaged, threads=1):
     reads = defaultdict(lambda: defaultdict(dict))
     bam, references = params
 
@@ -99,8 +99,6 @@ def get_read_by_taxa(
             map(
                 partial(
                     get_alns,
-                    bam=bam,
-                    reads=reads,
                     refs_tax=refs_tax,
                     refs_damaged=refs_damaged,
                     threads=threads,
@@ -110,7 +108,9 @@ def get_read_by_taxa(
         )
     else:
         p = Pool(
-            threads, initializer=initializer, initargs=([params, refs_damaged, refs_tax],)
+            threads,
+            initializer=initializer,
+            initargs=([params, refs_damaged, refs_tax],),
         )
 
         data = list(
@@ -118,8 +118,6 @@ def get_read_by_taxa(
                 p.imap_unordered(
                     partial(
                         get_alns,
-                        bam=bam,
-                        reads=reads,
                         refs_tax=refs_tax,
                         refs_damaged=refs_damaged,
                         threads=threads,
