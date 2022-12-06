@@ -84,6 +84,7 @@ def main():
 
         # get get_ranks
         ranks = {valid_ranks[x]: args.rank[x] for x in args.rank if x in valid_ranks}
+        print(ranks)
         # get refs that belong to this taxonomy
         # loop over all rows
         for i, row in tqdm.tqdm(
