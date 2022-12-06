@@ -63,6 +63,37 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
     return dict(reads)
 
 
+def merge_dicts(dicts):
+
+    d = defaultdict(lambda: defaultdict(dict))
+
+    # create read
+    # Check if reference is damaged
+    aln_reference_name = reference
+    aln_qname = aln.qname
+    is_damaged = "non-damaged"
+    if aln_reference_name in refs_damaged:
+        is_damaged = "damaged"
+
+    if reads[refs_tax[aln_reference_name]][aln_qname]:
+        dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+        if dmg == is_damaged:
+            continue
+        else:
+            reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"] = "multi"
+    else:
+        seq = Seq.Seq(aln.seq)
+        qual = aln.query_qualities
+        if aln.is_reverse:
+            seq = seq.reverse_complement()
+            qual = qual[::-1]
+        reads[refs_tax[aln_reference_name]][aln_qname] = {
+            "seq": seq,
+            "qual": qual,
+            "is_damaged": is_damaged,
+        }
+
+
 def init_pool(the_lock):
     global lock
     lock = the_lock
@@ -71,8 +102,8 @@ def init_pool(the_lock):
 def get_read_by_taxa(
     bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
 ):
-    prof = profile.Profile()
-    prof.enable()
+    # prof = profile.Profile()
+    # prof.enable()
 
     if (chunksize is not None) and ((len(refs) // chunksize) > threads):
         c_size = chunksize
@@ -123,9 +154,10 @@ def get_read_by_taxa(
 
     p.close()
     p.join()
-    prof.disable()
-    # print profiling output
-    stats = pstats.Stats(prof).sort_stats("tottime")
-    stats.print_stats(10)
+    # prof.disable()
+    # # print profiling output
+    # stats = pstats.Stats(prof).sort_stats("tottime")
+    # stats.print_stats(10)
+    print(data)
     exit()  # top 10 rows
     return data
