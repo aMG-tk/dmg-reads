@@ -22,9 +22,9 @@ def ddict():
 
 
 def get_alns(params, refs_tax, refs_damaged, threads=1):
+
     reads = defaultdict(lambda: defaultdict(dict))
     bam, references = params
-
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
 
     for reference in references:
