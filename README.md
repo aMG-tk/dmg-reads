@@ -59,7 +59,8 @@ For a complete list of options:
 ```bash
 $ dReads --help
 usage: dReads [-h] -m METADMG_RESULTS -f METADMG_FILTER [-b BAM] [-p PREFIX] [--combine]
-              [-T TAXONOMY_FILE] [-r RANK] [-M SORT_MEMORY] [-t THREADS] [--debug] [--version]
+              [--only-damaged] [-T TAXONOMY_FILE] [-r RANK] [-M SORT_MEMORY] [-t THREADS]
+              [--chunk-size CHUNK_SIZE] [--debug] [--version]
 
 A simple tool to extract damaged reads from BAM files
 
@@ -74,6 +75,7 @@ optional arguments:
                         Prefix used for the output files (default: None)
   --combine             If set, the reads damaged and non-damaged will be combined in one fastq file
                         (default: False)
+  --only-damaged        If set, only the reads damaged will be extracted (default: False)
   -T TAXONOMY_FILE, --taxonomy-file TAXONOMY_FILE
                         A file containing the taxonomy of the BAM references in the format
                         d__;p__;c__;o__;f__;g__;s__. (default: None)
@@ -84,6 +86,8 @@ optional arguments:
                         1G)
   -t THREADS, --threads THREADS
                         Number of threads (default: 1)
+  --chunk-size CHUNK_SIZE
+                        Chunk size for parallel processing (default: None)
   --debug               Print debug messages (default: False)
   --version             Print program version
 ```
