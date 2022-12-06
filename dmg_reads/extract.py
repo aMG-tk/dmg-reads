@@ -64,34 +64,34 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
 
 
 def merge_dicts(dicts):
+    pass
+    # d = defaultdict(lambda: defaultdict(dict))
 
-    d = defaultdict(lambda: defaultdict(dict))
+    # # create read
+    # # Check if reference is damaged
+    # aln_reference_name = reference
+    # aln_qname = aln.qname
+    # is_damaged = "non-damaged"
+    # if aln_reference_name in refs_damaged:
+    #     is_damaged = "damaged"
 
-    # create read
-    # Check if reference is damaged
-    aln_reference_name = reference
-    aln_qname = aln.qname
-    is_damaged = "non-damaged"
-    if aln_reference_name in refs_damaged:
-        is_damaged = "damaged"
-
-    if reads[refs_tax[aln_reference_name]][aln_qname]:
-        dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
-        if dmg == is_damaged:
-            continue
-        else:
-            reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"] = "multi"
-    else:
-        seq = Seq.Seq(aln.seq)
-        qual = aln.query_qualities
-        if aln.is_reverse:
-            seq = seq.reverse_complement()
-            qual = qual[::-1]
-        reads[refs_tax[aln_reference_name]][aln_qname] = {
-            "seq": seq,
-            "qual": qual,
-            "is_damaged": is_damaged,
-        }
+    # if reads[refs_tax[aln_reference_name]][aln_qname]:
+    #     dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+    #     if dmg == is_damaged:
+    #         continue
+    #     else:
+    #         reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"] = "multi"
+    # else:
+    #     seq = Seq.Seq(aln.seq)
+    #     qual = aln.query_qualities
+    #     if aln.is_reverse:
+    #         seq = seq.reverse_complement()
+    #         qual = qual[::-1]
+    #     reads[refs_tax[aln_reference_name]][aln_qname] = {
+    #         "seq": seq,
+    #         "qual": qual,
+    #         "is_damaged": is_damaged,
+    #     }
 
 
 def init_pool(the_lock):
