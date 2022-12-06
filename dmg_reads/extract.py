@@ -121,7 +121,7 @@ def get_read_by_taxa(
                     params,
                     chunksize=1,
                 ),
-                total=len(chunksize),
+                total=len(ref_chunks),
                 leave=False,
                 ncols=80,
                 desc="References processed",
