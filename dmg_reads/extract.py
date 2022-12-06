@@ -130,8 +130,6 @@ def get_read_by_taxa(
 
     p.close()
     p.join()
-
-    print(data)
     prof.disable()
     # print profiling output
     stats = pstats.Stats(prof).sort_stats("tottime")
