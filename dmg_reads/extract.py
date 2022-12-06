@@ -28,46 +28,46 @@ def ddict():
 MyManager.register("ddict", ddict, DictProxy)
 
 
-def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
-
+def get_alns(params, bam, refs_tax, refs_damaged, threads=1):
+    reads = defaultdict(lambda: defaultdict(dict))
     bam, references = params
 
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
 
     for reference in references:
-        with lock:
-            for aln in samfile.fetch(
-                contig=reference, multiple_iterators=False, until_eof=True
-            ):
+        for aln in samfile.fetch(
+            contig=reference, multiple_iterators=False, until_eof=True
+        ):
 
-                # create read
-                # Check if reference is damaged
-                aln_reference_name = reference
-                aln_qname = aln.qname
-                is_damaged = "non-damaged"
-                if aln_reference_name in refs_damaged:
-                    is_damaged = "damaged"
+            # create read
+            # Check if reference is damaged
+            aln_reference_name = reference
+            aln_qname = aln.qname
+            is_damaged = "non-damaged"
+            if aln_reference_name in refs_damaged:
+                is_damaged = "damaged"
 
-                if reads[refs_tax[aln_reference_name]][aln_qname]:
-                    dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
-                    if dmg == is_damaged:
-                        continue
-                    else:
-                        reads[refs_tax[aln_reference_name]][aln_qname][
-                            "is_damaged"
-                        ] = "multi"
+            if reads[refs_tax[aln_reference_name]][aln_qname]:
+                dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+                if dmg == is_damaged:
+                    continue
                 else:
-                    seq = Seq.Seq(aln.seq)
-                    qual = aln.query_qualities
-                    if aln.is_reverse:
-                        seq = seq.reverse_complement()
-                        qual = qual[::-1]
-                    reads[refs_tax[aln_reference_name]][aln_qname] = {
-                        "seq": seq,
-                        "qual": qual,
-                        "is_damaged": is_damaged,
-                    }
+                    reads[refs_tax[aln_reference_name]][aln_qname][
+                        "is_damaged"
+                    ] = "multi"
+            else:
+                seq = Seq.Seq(aln.seq)
+                qual = aln.query_qualities
+                if aln.is_reverse:
+                    seq = seq.reverse_complement()
+                    qual = qual[::-1]
+                reads[refs_tax[aln_reference_name]][aln_qname] = {
+                    "seq": seq,
+                    "qual": qual,
+                    "is_damaged": is_damaged,
+                }
     samfile.close()
+    return reads
 
 
 def init_pool(the_lock):
@@ -109,8 +109,9 @@ def get_read_by_taxa(
             )
         )
     else:
-        lock = Lock()
-        p = Pool(threads, initializer=init_pool, initargs=(lock,))
+        p = Pool(
+            threads, initializer=initializer, initargs=(params, refs_damaged, refs_tax)
+        )
 
         data = list(
             tqdm.tqdm(
@@ -136,7 +137,7 @@ def get_read_by_taxa(
     p.close()
     p.join()
 
-    print(reads)
+    print(data)
     prof.disable()
     # print profiling output
     stats = pstats.Stats(prof).sort_stats("tottime")
