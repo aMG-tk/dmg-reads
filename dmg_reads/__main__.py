@@ -102,7 +102,8 @@ def main():
                     # refs[row[0]] = f
     else:
         ranks = None
-
+    print(refs_tax)
+    exit()
     logging.info("Loading BAM file...")
     save = pysam.set_verbosity(0)
     bam = args.bam
