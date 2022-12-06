@@ -22,7 +22,7 @@ class MyManager(BaseManager):
 
 
 def ddict():
-    return defaultdict(ddict)
+    return defaultdict(lambda: defaultdict(dict))
 
 
 MyManager.register("ddict", ddict, DictProxy)
