@@ -96,6 +96,9 @@ def main():
             for r in taxs:
                 r1 = splitkeep(r, "__")
                 if r1[0] in ranks:
+                    print(r1[0])
+                    print(r1[1])
+
                     if any(r1[1] == x for x in ranks[r1[0]]):
                         print(r1[0])
                         print(r1[1])
