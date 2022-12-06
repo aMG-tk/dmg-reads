@@ -4,7 +4,7 @@ import pandas as pd
 import pysam
 from Bio import SeqIO, Seq, SeqRecord
 import logging
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 from multiprocessing.managers import BaseManager, DictProxy
 from collections import defaultdict
 from functools import partial
@@ -38,34 +38,40 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
         for aln in samfile.fetch(
             contig=reference, multiple_iterators=False, until_eof=True
         ):
-            # create read
-            # Check if reference is damaged
-            aln_reference_name = reference
-            aln_qname = aln.qname
-            is_damaged = "non-damaged"
-            if aln_reference_name in refs_damaged:
-                is_damaged = "damaged"
+            with lock:
+                # create read
+                # Check if reference is damaged
+                aln_reference_name = reference
+                aln_qname = aln.qname
+                is_damaged = "non-damaged"
+                if aln_reference_name in refs_damaged:
+                    is_damaged = "damaged"
 
-            if reads[refs_tax[aln_reference_name]][aln_qname]:
-                dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
-                if dmg == is_damaged:
-                    continue
+                if reads[refs_tax[aln_reference_name]][aln_qname]:
+                    dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+                    if dmg == is_damaged:
+                        continue
+                    else:
+                        reads[refs_tax[aln_reference_name]][aln_qname][
+                            "is_damaged"
+                        ] = "multi"
                 else:
-                    reads[refs_tax[aln_reference_name]][aln_qname][
-                        "is_damaged"
-                    ] = "multi"
-            else:
-                seq = Seq.Seq(aln.seq)
-                qual = aln.query_qualities
-                if aln.is_reverse:
-                    seq = seq.reverse_complement()
-                    qual = qual[::-1]
-                reads[refs_tax[aln_reference_name]][aln_qname] = {
-                    "seq": seq,
-                    "qual": qual,
-                    "is_damaged": is_damaged,
-                }
+                    seq = Seq.Seq(aln.seq)
+                    qual = aln.query_qualities
+                    if aln.is_reverse:
+                        seq = seq.reverse_complement()
+                        qual = qual[::-1]
+                    reads[refs_tax[aln_reference_name]][aln_qname] = {
+                        "seq": seq,
+                        "qual": qual,
+                        "is_damaged": is_damaged,
+                    }
     samfile.close()
+
+
+def init_pool(the_lock):
+    global lock
+    lock = the_lock
 
 
 def get_read_by_taxa(
@@ -80,13 +86,13 @@ def get_read_by_taxa(
         c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
 
     ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
-    print(ref_chunks)
+
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
     mgr = MyManager()
     mgr.start()
     reads = mgr.ddict()
-    print(threads)
+
     if is_debug():
         data = list(
             map(
@@ -102,11 +108,7 @@ def get_read_by_taxa(
             )
         )
     else:
-        p = Pool(
-            threads,
-            initializer=initializer,
-            initargs=([params, refs_tax, refs_damaged],),
-        )
+        p = Pool(threads, initializer=init_pool, initargs=(lock,))
 
         data = list(
             tqdm.tqdm(
