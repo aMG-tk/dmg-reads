@@ -105,7 +105,7 @@ def main():
     logging.info("Loading BAM file...")
     save = pysam.set_verbosity(0)
     bam = args.bam
-    samfile = pysam.AlignmentFile(bam, "rb")
+    samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
 
     chr_lengths = []
     for chrom in samfile.references:
@@ -120,7 +120,7 @@ def main():
             "-@", str(args.threads), "-m", str(args.sort_memory), "-o", sorted_bam, bam
         )
         bam = sorted_bam
-        samfile = pysam.AlignmentFile(bam, "rb")
+        samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
 
     if not samfile.has_index():
         logging.info("BAM index not found. Indexing...")
@@ -132,7 +132,7 @@ def main():
                 bam, "-@", str(args.threads)
             )  # Need to reload the samfile after creating index
             log.info("Re-loading BAM file")
-            samfile = pysam.AlignmentFile(bam, "rb")
+            samfile = pysam.AlignmentFile(bam, "rb", thread=args.threads)
     pysam.set_verbosity(save)
     ref_bam_dict = {
         chrom.contig: chrom.mapped
@@ -173,11 +173,12 @@ def main():
     log.info("Processing reads...")
 
     reads = get_read_by_taxa(
-        samfile=samfile,
+        bam=bam,
         refs=refs,
         refs_tax=refs_tax,
         refs_damaged=refs_damaged,
         ref_bam_dict=ref_bam_dict,
+        threads=args.threads,
     )
     # write reads
 
