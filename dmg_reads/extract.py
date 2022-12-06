@@ -9,7 +9,7 @@ from multiprocessing.managers import BaseManager, DictProxy
 from collections import defaultdict
 from functools import partial
 
-from dmg_reads.utils import is_debug, initializer
+from dmg_reads.utils import is_debug, calc_chunksize, initializer
 
 # import cProfile as profile
 # import pstats
@@ -28,41 +28,46 @@ def ddict():
 MyManager.register("ddict", ddict, DictProxy)
 
 
-def get_alns(reference, bam, reads, refs_tax, refs_damaged):
+def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
+    bam, references = params
+    samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
+    for reference in references:
+        for aln in samfile.fetch(
+            reference=reference, multiple_iterators=False, until_eof=False
+        ):
+            # create read
+            # Check if reference is damaged
+            aln_reference_name = reference
+            aln_qname = aln.qname
+            is_damaged = "non-damaged"
+            if aln_reference_name in refs_damaged:
+                is_damaged = "damaged"
 
-    samfile = pysam.AlignmentFile(bam, "rb")
-    for aln in samfile.fetch(
-        reference=reference, multiple_iterators=False, until_eof=False
-    ):
-        # create read
-        # Check if reference is damaged
-        aln_reference_name = reference
-        aln_qname = aln.qname
-        is_damaged = "non-damaged"
-        if aln_reference_name in refs_damaged:
-            is_damaged = "damaged"
-
-        if reads[refs_tax[aln_reference_name]][aln_qname]:
-            dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
-            if dmg == is_damaged:
-                continue
+            if reads[refs_tax[aln_reference_name]][aln_qname]:
+                dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+                if dmg == is_damaged:
+                    continue
+                else:
+                    reads[refs_tax[aln_reference_name]][aln_qname][
+                        "is_damaged"
+                    ] = "multi"
             else:
-                reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"] = "multi"
-        else:
-            seq = Seq.Seq(aln.seq)
-            qual = aln.query_qualities
-            if aln.is_reverse:
-                seq = seq.reverse_complement()
-                qual = qual[::-1]
-            reads[refs_tax[aln_reference_name]][aln_qname] = {
-                "seq": seq,
-                "qual": qual,
-                "is_damaged": is_damaged,
-            }
+                seq = Seq.Seq(aln.seq)
+                qual = aln.query_qualities
+                if aln.is_reverse:
+                    seq = seq.reverse_complement()
+                    qual = qual[::-1]
+                reads[refs_tax[aln_reference_name]][aln_qname] = {
+                    "seq": seq,
+                    "qual": qual,
+                    "is_damaged": is_damaged,
+                }
     samfile.close()
 
 
-def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1):
+def get_read_by_taxa(
+    bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
+):
     # prof = profile.Profile()
     # prof.enable()
     # reads = defaultdict(lambda: defaultdict(dict))
@@ -71,6 +76,14 @@ def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1)
     mgr = MyManager()
     mgr.start()
     reads = mgr.ddict()
+
+    if (chunksize is not None) and ((len(refs) // chunksize) > threads):
+        c_size = chunksize
+    else:
+        c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
+    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
+    params = zip([bam] * len(ref_chunks), ref_chunks)
+    params = zip([bam] * len(ref_chunks), ref_chunks)
 
     if is_debug():
         data = list(
@@ -81,14 +94,17 @@ def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1)
                     reads=reads,
                     refs_tax=refs_tax,
                     refs_damaged=refs_damaged,
+                    threads=threads,
                 ),
-                refs,
+                params,
             )
         )
     else:
 
         p = Pool(
             threads,
+            initializer=initializer,
+            initargs=([params, refs_tax, refs_damaged],),
         )
 
         data = list(
@@ -100,8 +116,9 @@ def get_read_by_taxa(bam, refs_tax, refs, refs_damaged, ref_bam_dict, threads=1)
                         reads=reads,
                         refs_tax=refs_tax,
                         refs_damaged=refs_damaged,
+                        threads=threads,
                     ),
-                    refs,
+                    params,
                     chunksize=1,
                 ),
                 total=len(refs),

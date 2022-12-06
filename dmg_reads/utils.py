@@ -347,13 +347,6 @@ def initializer(init_data):
     parms = init_data
 
 
-def clean_up(keep, temp_dir):
-    if keep:
-        logging.info("Cleaning up temporary files")
-        logging.shutdown()
-        shutil.rmtree(temp_dir, ignore_errors=True)
-
-
 # from https://stackoverflow.com/questions/53751050/python-multiprocessing-understanding-logic-behind-chunksize/54032744#54032744
 def calc_chunksize(n_workers, len_iterable, factor=4):
     """Calculate chunksize argument for Pool-methods.
