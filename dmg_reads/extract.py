@@ -28,6 +28,11 @@ def ddict():
 MyManager.register("ddict", ddict, DictProxy)
 
 
+def init_pool(the_lock):
+    global lock
+    lock = the_lock
+
+
 def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
 
     bam, references = params
@@ -67,11 +72,6 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
                         "is_damaged": is_damaged,
                     }
     samfile.close()
-
-
-def init_pool(the_lock):
-    global lock
-    lock = the_lock
 
 
 def get_read_by_taxa(
