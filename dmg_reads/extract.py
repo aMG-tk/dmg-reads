@@ -28,11 +28,6 @@ def ddict():
 MyManager.register("ddict", ddict, DictProxy)
 
 
-def init_pool(the_lock):
-    global lock
-    lock = the_lock
-
-
 def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
 
     bam, references = params
@@ -74,6 +69,11 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
     samfile.close()
 
 
+def init_pool(the_lock):
+    global lock
+    lock = the_lock
+
+
 def get_read_by_taxa(
     bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
 ):
@@ -85,7 +85,7 @@ def get_read_by_taxa(
     else:
         c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
 
-    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
+    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)][0:5]
 
     params = zip([bam] * len(ref_chunks), ref_chunks)
 
@@ -111,24 +111,26 @@ def get_read_by_taxa(
         lock = Lock()
         p = Pool(threads, initializer=init_pool, initargs=(lock,))
 
-        for chunk in tqdm.tqdm(
-            params,
-            total=len(ref_chunks),
-            leave=False,
-            ncols=80,
-            desc="References processed",
-        ):
-            p.apply_async(
-                partial(
-                    get_alns,
-                    params=chunk,
-                    bam=bam,
-                    reads=reads,
-                    refs_tax=refs_tax,
-                    refs_damaged=refs_damaged,
-                    threads=threads,
-                )
-            ),
+        data = list(
+            tqdm.tqdm(
+                p.imap_unordered(
+                    partial(
+                        get_alns,
+                        bam=bam,
+                        reads=reads,
+                        refs_tax=refs_tax,
+                        refs_damaged=refs_damaged,
+                        threads=threads,
+                    ),
+                    params,
+                    chunksize=1,
+                ),
+                total=len(ref_chunks),
+                leave=False,
+                ncols=80,
+                desc="References processed",
+            )
+        )
 
     p.close()
     p.join()
