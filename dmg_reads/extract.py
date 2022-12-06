@@ -125,8 +125,8 @@ def get_read_by_taxa(
             )
         )
 
-    pool.close()
-    pool.join()
+    p.close()
+    p.join()
 
     print(reads)
     prof.disable()
