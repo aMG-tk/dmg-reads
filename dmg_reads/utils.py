@@ -324,6 +324,8 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
         if combined:
             out_files = defaultdict()
             for k, v in taxon.items():
+                print(k)
+                print(v)
                 for i in v:
                     i = re.sub("[^0-9a-zA-Z]+", "_", i)
                     out_files[f"fastq_{k}{i}"] = f"{prefix}.{k}{i}.fastq.gz"

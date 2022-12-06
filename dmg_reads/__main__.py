@@ -195,7 +195,6 @@ def main():
         disable_tqdm = False
 
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
-        print(tax)
         tax = re.sub("[^0-9a-zA-Z]+", "_", tax)
         if args.taxonomy_file:
             fastq_damaged = out_files[f"fastq_damaged_{tax}"]
