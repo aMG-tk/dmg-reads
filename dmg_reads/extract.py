@@ -11,8 +11,8 @@ from functools import partial
 
 from dmg_reads.utils import is_debug, calc_chunksize, initializer
 
-# import cProfile as profile
-# import pstats
+import cProfile as profile
+import pstats
 
 log = logging.getLogger("my_logger")
 
@@ -33,7 +33,7 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
     samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
     for reference in references:
         for aln in samfile.fetch(
-            reference=reference, multiple_iterators=False, until_eof=False
+            contig=reference, multiple_iterators=False, until_eof=True
         ):
             # create read
             # Check if reference is damaged
@@ -68,14 +68,8 @@ def get_alns(params, bam, reads, refs_tax, refs_damaged, threads=1):
 def get_read_by_taxa(
     bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
 ):
-    # prof = profile.Profile()
-    # prof.enable()
-    # reads = defaultdict(lambda: defaultdict(dict))
-
-    pool = Pool(processes=threads)
-    mgr = MyManager()
-    mgr.start()
-    reads = mgr.ddict()
+    prof = profile.Profile()
+    prof.enable()
 
     if (chunksize is not None) and ((len(refs) // chunksize) > threads):
         c_size = chunksize
@@ -84,6 +78,10 @@ def get_read_by_taxa(
 
     ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
     params = zip([bam] * len(ref_chunks), ref_chunks)
+
+    mgr = MyManager()
+    mgr.start()
+    reads = mgr.ddict()
 
     if is_debug():
         data = list(
@@ -100,7 +98,6 @@ def get_read_by_taxa(
             )
         )
     else:
-
         p = Pool(
             threads,
             initializer=initializer,
@@ -132,8 +129,8 @@ def get_read_by_taxa(
     pool.join()
 
     print(reads)
-    # prof.disable()
-    # # print profiling output
-    # stats = pstats.Stats(prof).sort_stats("tottime")
-    # stats.print_stats(10)  # top 10 rows
+    prof.disable()
+    # print profiling output
+    stats = pstats.Stats(prof).sort_stats("tottime")
+    stats.print_stats(10)  # top 10 rows
     return reads
