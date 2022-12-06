@@ -321,7 +321,9 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
             for k, v in taxon.items():
                 for i in v:
                     i = re.sub("[^0-9a-zA-Z]+", "_", i)
-                    out_files[f"fastq_damaged_{k}{i}"] = f"{prefix}.{k}{i}.damaged.fastq.gz"
+                    out_files[
+                        f"fastq_damaged_{k}{i}"
+                    ] = f"{prefix}.{k}{i}.damaged.fastq.gz"
                     out_files[
                         f"fastq_nondamaged_{k}{i}"
                     ] = f"{prefix}.{k}{i}.non-damaged.fastq.gz"
@@ -338,3 +340,27 @@ def splitkeep(s, delimiter):
 
 def fast_flatten(input_list):
     return list(chain.from_iterable(input_list))
+
+
+def initializer(init_data):
+    global parms
+    parms = init_data
+
+
+def clean_up(keep, temp_dir):
+    if keep:
+        logging.info("Cleaning up temporary files")
+        logging.shutdown()
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# from https://stackoverflow.com/questions/53751050/python-multiprocessing-understanding-logic-behind-chunksize/54032744#54032744
+def calc_chunksize(n_workers, len_iterable, factor=4):
+    """Calculate chunksize argument for Pool-methods.
+
+    Resembles source-code within `multiprocessing.pool.Pool._map_async`.
+    """
+    chunksize, extra = divmod(len_iterable, n_workers * factor)
+    if extra:
+        chunksize += 1
+    return chunksize
