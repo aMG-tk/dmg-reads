@@ -334,7 +334,9 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
                 print(k)
                 print(v)
                 for i in v:
+                    print(i)
                     i = re.sub("[^0-9a-zA-Z]+", "_", i)
+                    print(i)
                     out_files[
                         f"fastq_damaged_{k}{i}"
                     ] = f"{prefix}.{k}{i}.damaged.fastq.gz"

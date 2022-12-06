@@ -163,7 +163,8 @@ def main():
         refs = fast_flatten([refs_non_damaged, refs_damaged])
 
     out_files = create_output_files(prefix=args.prefix, bam=args.bam, taxon=ranks)
-
+    print(out_files)
+    exit()
     for file in out_files:
         # file exists deleted
         if os.path.exists(out_files[file]):
