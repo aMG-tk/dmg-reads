@@ -156,15 +156,14 @@ def main():
         refs_damaged = damaged_taxa["reference"].to_list()
         refs_non_damaged = set(refs_bam) - set(refs_damaged)
         refs_tax = {ref: "all" for ref in refs_bam}
-    print(refs_tax)
+
     if args.only_damaged:
         refs = refs_damaged
     else:
         refs = fast_flatten([refs_non_damaged, refs_damaged])
 
     out_files = create_output_files(prefix=args.prefix, bam=args.bam, taxon=ranks)
-    print(out_files)
-    exit()
+
     for file in out_files:
         # file exists deleted
         if os.path.exists(out_files[file]):
@@ -196,6 +195,8 @@ def main():
         disable_tqdm = False
 
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
+        print(tax)
+        tax = re.sub("[^0-9a-zA-Z]+", "_", tax)
         if args.taxonomy_file:
             fastq_damaged = out_files[f"fastq_damaged_{tax}"]
             fastq_nondamaged = out_files[f"fastq_nondamaged_{tax}"]
