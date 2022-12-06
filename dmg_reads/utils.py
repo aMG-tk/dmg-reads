@@ -177,6 +177,7 @@ defaults = {
     "prefix": None,
     "sort_memory": "1G",
     "threads": 1,
+    "chunk_size": None,
 }
 
 help_msg = {
@@ -189,6 +190,7 @@ help_msg = {
     "combine": "If set, the reads damaged and non-damaged will be combined in one fastq file",
     "only_damaged": "If set, only the reads damaged will be extracted",
     "sort_memory": "Set maximum memory per thread for sorting; suffix K/M/G recognized",
+    "chunk_size": "Chunk size for parallel processing",
     "threads": "Number of threads",
     "debug": "Print debug messages",
     "version": "Print program version",
@@ -273,6 +275,15 @@ def get_arguments(argv=None):
         help=help_msg["threads"],
     )
     parser.add_argument(
+        "--chunk-size",
+        type=lambda x: int(
+            check_values(x, minval=1, maxval=100000, parser=parser, var="--chunk-size")
+        ),
+        default=defaults["chunk_size"],
+        dest="chunk_size",
+        help=help_msg["chunk_size"],
+    )
+    parser.add_argument(
         "--debug", dest="debug", action="store_true", help=help_msg["debug"]
     )
     parser.add_argument(
@@ -321,7 +332,9 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
             for k, v in taxon.items():
                 for i in v:
                     i = re.sub("[^0-9a-zA-Z]+", "_", i)
-                    out_files[f"fastq_damaged_{k}{i}"] = f"{prefix}.{k}{i}.damaged.fastq.gz"
+                    out_files[
+                        f"fastq_damaged_{k}{i}"
+                    ] = f"{prefix}.{k}{i}.damaged.fastq.gz"
                     out_files[
                         f"fastq_nondamaged_{k}{i}"
                     ] = f"{prefix}.{k}{i}.non-damaged.fastq.gz"
@@ -338,3 +351,20 @@ def splitkeep(s, delimiter):
 
 def fast_flatten(input_list):
     return list(chain.from_iterable(input_list))
+
+
+def initializer(init_data):
+    global parms
+    parms = init_data
+
+
+# from https://stackoverflow.com/questions/53751050/python-multiprocessing-understanding-logic-behind-chunksize/54032744#54032744
+def calc_chunksize(n_workers, len_iterable, factor=4):
+    """Calculate chunksize argument for Pool-methods.
+
+    Resembles source-code within `multiprocessing.pool.Pool._map_async`.
+    """
+    chunksize, extra = divmod(len_iterable, n_workers * factor)
+    if extra:
+        chunksize += 1
+    return chunksize

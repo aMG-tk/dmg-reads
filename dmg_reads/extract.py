@@ -1,10 +1,11 @@
-from collections import defaultdict
-from wsgiref.util import request_uri
 import tqdm
-import pandas as pd
 import pysam
-from Bio import SeqIO, Seq, SeqRecord
+from Bio import Seq
 import logging
+from multiprocessing import Pool
+from collections import defaultdict
+from functools import partial
+from dmg_reads.utils import is_debug, calc_chunksize, initializer
 
 # import cProfile as profile
 # import pstats
@@ -12,19 +13,15 @@ import logging
 log = logging.getLogger("my_logger")
 
 
-def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
-    # prof = profile.Profile()
-    # prof.enable()
-    reads = defaultdict(lambda: defaultdict(dict))
+def get_alns(params, refs_tax, refs_damaged, threads=1):
 
-    for reference in tqdm.tqdm(
-        refs,
-        total=len(refs),
-        leave=False,
-        desc="References processed",
-    ):
+    reads = defaultdict(lambda: defaultdict(dict))
+    bam, references = params
+    samfile = pysam.AlignmentFile(bam, "rb", threads=threads)
+
+    for reference in references:
         for aln in samfile.fetch(
-            reference=reference, multiple_iterators=False, until_eof=False
+            contig=reference, multiple_iterators=False, until_eof=True
         ):
             # create read
             # Check if reference is damaged
@@ -53,11 +50,90 @@ def get_read_by_taxa(samfile, refs_tax, refs, refs_damaged, ref_bam_dict):
                     "qual": qual,
                     "is_damaged": is_damaged,
                 }
+    samfile.close()
+    return dict(reads)
 
+
+def merge_dicts(dicts):
+
+    reads = defaultdict(lambda: defaultdict(dict))
+
+    for d in dicts:
+        for tax, tax_reads in d.items():
+            for read, read_info in tax_reads.items():
+                if reads[tax][read]:
+                    dmg = reads[tax][read]["is_damaged"]
+                    if dmg == read_info["is_damaged"]:
+                        continue
+                    else:
+                        reads[tax][read]["is_damaged"] = "multi"
+                else:
+                    reads[tax][read] = read_info
+    return dict(reads)
+
+
+def get_read_by_taxa(
+    bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
+):
+    # prof = profile.Profile()
+    # prof.enable()
+
+    if (chunksize is not None) and ((len(refs) // chunksize) > threads):
+        c_size = chunksize
+    else:
+        c_size = calc_chunksize(n_workers=threads, len_iterable=len(refs), factor=4)
+
+    ref_chunks = [refs[i : i + c_size] for i in range(0, len(refs), c_size)]
+
+    params = zip([bam] * len(ref_chunks), ref_chunks)
+
+    if is_debug():
+        data = list(
+            map(
+                partial(
+                    get_alns,
+                    refs_tax=refs_tax,
+                    refs_damaged=refs_damaged,
+                    threads=threads,
+                ),
+                params,
+            )
+        )
+    else:
+        logging.info(
+            f"Processing {len(ref_chunks):,} chunks of {c_size:,} references each..."
+        )
+        p = Pool(
+            threads,
+            initializer=initializer,
+            initargs=([params, refs_damaged, refs_tax],),
+        )
+
+        data = list(
+            tqdm.tqdm(
+                p.imap_unordered(
+                    partial(
+                        get_alns,
+                        refs_tax=refs_tax,
+                        refs_damaged=refs_damaged,
+                        threads=threads,
+                    ),
+                    params,
+                    chunksize=1,
+                ),
+                total=len(ref_chunks),
+                leave=False,
+                ncols=80,
+                desc="References processed",
+            )
+        )
+
+    p.close()
+    p.join()
     # prof.disable()
     # # print profiling output
     # stats = pstats.Stats(prof).sort_stats("tottime")
-    # stats.print_stats(10)  # top 10 rows
-
-    samfile.close()
-    return reads
+    # stats.print_stats(10)
+    log.info(f"Merging {len(ref_chunks)} chunks...")
+    data = merge_dicts(data)  # top 10 rows
+    return data

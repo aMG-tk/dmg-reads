@@ -30,7 +30,7 @@ import pandas as pd
 import os
 import pysam
 import numpy as np
-from Bio import SeqIO, Seq, SeqRecord
+from Bio import SeqIO, SeqRecord
 import gzip
 from mimetypes import guess_type
 from functools import partial
@@ -105,7 +105,7 @@ def main():
     logging.info("Loading BAM file...")
     save = pysam.set_verbosity(0)
     bam = args.bam
-    samfile = pysam.AlignmentFile(bam, "rb")
+    samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
 
     chr_lengths = []
     for chrom in samfile.references:
@@ -120,7 +120,7 @@ def main():
             "-@", str(args.threads), "-m", str(args.sort_memory), "-o", sorted_bam, bam
         )
         bam = sorted_bam
-        samfile = pysam.AlignmentFile(bam, "rb")
+        samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
 
     if not samfile.has_index():
         logging.info("BAM index not found. Indexing...")
@@ -132,7 +132,7 @@ def main():
                 bam, "-@", str(args.threads)
             )  # Need to reload the samfile after creating index
             log.info("Re-loading BAM file")
-            samfile = pysam.AlignmentFile(bam, "rb")
+            samfile = pysam.AlignmentFile(bam, "rb", threads=args.threads)
     pysam.set_verbosity(save)
     ref_bam_dict = {
         chrom.contig: chrom.mapped
@@ -142,7 +142,7 @@ def main():
     refs_bam = [
         chrom.contig for chrom in samfile.get_index_statistics() if chrom.mapped > 0
     ]
-
+    samfile.close()
     if args.taxonomy_file:
         refs_damaged = set(refs_tax.keys()).intersection(
             set(damaged_taxa["reference"].to_list())
@@ -173,11 +173,13 @@ def main():
     log.info("Processing reads...")
 
     reads = get_read_by_taxa(
-        samfile=samfile,
+        bam=bam,
         refs=refs,
         refs_tax=refs_tax,
         refs_damaged=refs_damaged,
         ref_bam_dict=ref_bam_dict,
+        threads=args.threads,
+        chunksize=args.chunk_size,
     )
     # write reads
 
@@ -187,6 +189,11 @@ def main():
         desc = "Taxa processed"
     else:
         desc = "References processed"
+
+    if len(reads) > 3:
+        disable_tqdm = True
+    else:
+        disable_tqdm = False
 
     for tax in tqdm.tqdm(reads, ncols=80, desc=desc, leave=False, total=len(reads)):
         if args.taxonomy_file:
@@ -208,7 +215,15 @@ def main():
         ) as f_nondamaged, _open(fastq_multi) as f_multi, _open(
             fastq_combined
         ) as f_combined:
-            for read in reads[tax]:
+            for read in tqdm.tqdm(
+                reads[tax],
+                ncols=80,
+                desc="Reads written",
+                leave=False,
+                total=len(reads[tax]),
+                ascii="░▒█",
+                disable=disable_tqdm,
+            ):
                 rec = SeqRecord.SeqRecord(reads[tax][read]["seq"], read, "", "")
                 rec.letter_annotations["phred_quality"] = reads[tax][read]["qual"]
                 if args.combine:
