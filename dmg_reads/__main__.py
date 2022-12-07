@@ -257,7 +257,9 @@ def main():
         if count[out_files[file]] and count[out_files[file]] > 0:
             pass
         else:
-            os.remove(out_files[file])
+            # check if file exists
+            if os.path.exists(out_files[file]):
+                os.remove(out_files[file])
 
     logging.info("Done!")
 
