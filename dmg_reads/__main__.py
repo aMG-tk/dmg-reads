@@ -76,7 +76,7 @@ def main():
         filter_conditions=args.metaDMG_filter,
     )
 
-    refs_discarded = {}
+    discarded_refs = {}
 
     if args.fb_data:
         log.info("Loading filterBAM results...")
@@ -200,7 +200,6 @@ def main():
     else:
         refs_discarded = set(refs_bam).intersection(discarded_refs)
         refs_non_discarded = set(refs_bam) - refs_discarded
-
         refs_damaged = damaged_taxa["reference"].to_list()
         refs_non_damaged = set(refs_non_discarded) - set(refs_damaged)
         refs_tax = {ref: "all" for ref in refs_non_discarded}
