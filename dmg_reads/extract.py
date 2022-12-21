@@ -13,7 +13,7 @@ from dmg_reads.utils import is_debug, calc_chunksize, initializer
 log = logging.getLogger("my_logger")
 
 
-def get_alns(params, refs_tax, refs_damaged, threads=1):
+def get_alns(params, refs_tax, refs_discarded, refs_damaged, threads=1):
 
     reads = defaultdict(lambda: defaultdict(dict))
     bam, references = params
@@ -28,24 +28,32 @@ def get_alns(params, refs_tax, refs_damaged, threads=1):
             aln_reference_name = reference
             aln_qname = aln.qname
             is_damaged = "non-damaged"
+            
             if aln_reference_name in refs_damaged:
                 is_damaged = "damaged"
+            elif aln_reference_name in refs_discarded:
+                is_damaged = "discarded"
 
-            if reads[refs_tax[aln_reference_name]][aln_qname]:
-                dmg = reads[refs_tax[aln_reference_name]][aln_qname]["is_damaged"]
+            if aln_reference_name in refs_tax:
+                name = refs_tax[aln_reference_name]
+            else:
+                name = "discarded"
+
+            if reads[name][aln_qname]:
+                dmg = reads[name][aln_qname]["is_damaged"]
                 if dmg == is_damaged:
                     continue
+                elif dmg == "discarded":
+                    continue
                 else:
-                    reads[refs_tax[aln_reference_name]][aln_qname][
-                        "is_damaged"
-                    ] = "multi"
+                    reads[name][aln_qname]["is_damaged"] = "multi"
             else:
                 seq = Seq.Seq(aln.seq)
                 qual = aln.query_qualities
                 if aln.is_reverse:
                     seq = seq.reverse_complement()
                     qual = qual[::-1]
-                reads[refs_tax[aln_reference_name]][aln_qname] = {
+                reads[name][aln_qname] = {
                     "seq": seq,
                     "qual": qual,
                     "is_damaged": is_damaged,
@@ -73,7 +81,14 @@ def merge_dicts(dicts):
 
 
 def get_read_by_taxa(
-    bam, refs_tax, refs, refs_damaged, ref_bam_dict, chunksize=None, threads=1
+    bam,
+    refs,
+    refs_discarded,
+    refs_tax,
+    refs_damaged,
+    ref_bam_dict,
+    chunksize=None,
+    threads=1,
 ):
     # prof = profile.Profile()
     # prof.enable()
@@ -93,6 +108,7 @@ def get_read_by_taxa(
                 partial(
                     get_alns,
                     refs_tax=refs_tax,
+                    refs_discarded=refs_discarded,
                     refs_damaged=refs_damaged,
                     threads=threads,
                 ),
@@ -115,6 +131,7 @@ def get_read_by_taxa(
                     partial(
                         get_alns,
                         refs_tax=refs_tax,
+                        refs_discarded=refs_discarded,
                         refs_damaged=refs_damaged,
                         threads=threads,
                     ),
