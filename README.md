@@ -58,32 +58,37 @@ For a complete list of options:
 
 ```bash
 $ dReads --help
-usage: dReads [-h] -m METADMG_RESULTS -f METADMG_FILTER [-b BAM] [-p PREFIX] [--combine]
-              [--only-damaged] [-T TAXONOMY_FILE] [-r RANK] [-M SORT_MEMORY] [-t THREADS]
+usage: dReads [-h] -b BAM -m METADMG_RESULTS -f METADMG_FILTER [--fb-data FB_DATA] [--fb-filter FB_FILTER]
+              [-p PREFIX] [--combine] [--only-damaged] [-T TAXONOMY_FILE] [-r RANK] [-M SORT_MEMORY] [-t THREADS]
               [--chunk-size CHUNK_SIZE] [--debug] [--version]
 
 A simple tool to extract damaged reads from BAM files
 
 optional arguments:
   -h, --help            show this help message and exit
+
+required arguments:
+  -b BAM, --bam BAM     The BAM file used to generate the metaDMG results (default: None)
   -m METADMG_RESULTS, --metaDMG-results METADMG_RESULTS
                         A file from metaDMG ran in local mode (default: None)
   -f METADMG_FILTER, --metaDMG-filter METADMG_FILTER
                         Which filter to use for metaDMG results (default: None)
-  -b BAM, --bam BAM     The BAM file used to generate the metaDMG results (default: None)
+
+optional arguments:
+  --fb-data FB_DATA     A file from filterBAM ran in local mode (default: None)
+  --fb-filter FB_FILTER
+                        Which filter to use for filterBAM results (default: None)
   -p PREFIX, --prefix PREFIX
                         Prefix used for the output files (default: None)
-  --combine             If set, the reads damaged and non-damaged will be combined in one fastq file
-                        (default: False)
+  --combine             If set, the reads damaged and non-damaged will be combined in one fastq file (default:
+                        False)
   --only-damaged        If set, only the reads damaged will be extracted (default: False)
   -T TAXONOMY_FILE, --taxonomy-file TAXONOMY_FILE
                         A file containing the taxonomy of the BAM references in the format
                         d__;p__;c__;o__;f__;g__;s__. (default: None)
-  -r RANK, --rank RANK  Which taxonomic group and rank we want to get the reads extracted. (default:
-                        None)
+  -r RANK, --rank RANK  Which taxonomic group and rank we want to get the reads extracted. (default: None)
   -M SORT_MEMORY, --sort-memory SORT_MEMORY
-                        Set maximum memory per thread for sorting; suffix K/M/G recognized (default:
-                        1G)
+                        Set maximum memory per thread for sorting; suffix K/M/G recognized (default: 1G)
   -t THREADS, --threads THREADS
                         Number of threads (default: 1)
   --chunk-size CHUNK_SIZE
@@ -134,4 +139,12 @@ ACCESSION\td__Bacteria;l__Bacteria;k__Bacteria;p__Proteobacteria;c__Gammaproteob
 
 > **Note**: The taxonomic groups are case sensitive and one can include as many as desired. For example, if one wants to extract the reads from the genus *Yersinia* and the class *Bacilli*, one would use `--rank '{"genus": "Yersinia", "class":"Bacilli"}`.
 
+# Using the results from filterBAM
+If the results from `filterBAM` are available, one can use them to extract the reads. To do so, one needs to provide the `--fb-data` and `--fb-filter` arguments. The `--fb-data` argument should be the path to the `filterBAM` results file and the `--fb-filter` argument should be the filter we want to use to filter the references. For example:
+
+```bash
+dReads -m RISE505_MA873_L1.tp-mdmg.local.weight-1.csv.gz -b RISE505_MA873_L1.dedup.filtered.sorted.bam -f '{ "damage": 0.1, "significance": 2 }' --prefix RISE505_MA873_L1 --taxonomy-file gtdb-r202-organelles-viruses.tax.tsv --rank '{"genus": "Yersinia", "class":"Bacilli"}' --fb-data RISE505_MA873_L1.dedup_stats-filtered.tsv.gz --fb-filter '{"breadth": 0.171, "n_alns": 249}' --threads 4
+```
+
+> **Note**: The final number number of reads might not correspond to the number of reads in the BAM file. The reason is that if you are allowing multiple alignments for each read, the reads might be mapped to multiple references. In this case, the reads will be counted multiple times, for example, a read might map to a certain references, but also map to a reference that might be discarded. In this case, the read will be counted twice, once for the reference that is not discarded and once for the reference that is discarded.
 
