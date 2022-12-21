@@ -8,7 +8,7 @@ from os import devnull
 from dmg_reads import __version__
 import time
 import json
-from dmg_reads.defaults import mdmg_header, valid_ranks
+from dmg_reads.defaults import mdmg_header, valid_ranks, filterBAM_header
 from collections import defaultdict
 import re
 from itertools import chain
@@ -124,14 +124,18 @@ def is_valid_file(parser, arg, var):
         return arg
 
 
-def is_valid_filter(parser, arg, var):
+def is_valid_filter(parser, arg, var, type="metaDMG"):
+    if type == "metaDMG":
+        header = mdmg_header
+    elif type == "filterBAM":
+        header = filterBAM_header
     arg = json.loads(arg)
     # check if the dictionary keys are in the mdmg header list
     for key in arg.keys():
-        if key not in mdmg_header:
+        if key not in header:
             parser.error(
                 f"argument {var}: Invalid value {key}.\n"
-                f"Valid values are: {convert_list_to_str(mdmg_header)}"
+                f"Valid values are: {convert_list_to_str(header)}"
             )
 
     return arg
@@ -174,6 +178,7 @@ def get_ranks(parser, ranks, var):
 
 defaults = {
     "metaDMG_filter": {"damage": 0.1, "significance": 2},
+    "fb_filter": {"n_reads": 100, "breadth": 0.1},
     "prefix": None,
     "sort_memory": "1G",
     "threads": 1,
@@ -183,6 +188,8 @@ defaults = {
 help_msg = {
     "metaDMG_results": "A file from metaDMG ran in local mode",
     "metaDMG_filter": "Which filter to use for metaDMG results",
+    "fb_data": "A file from filterBAM ran in local mode",
+    "fb_filter": "Which filter to use for filterBAM results",
     "bam": "The BAM file used to generate the metaDMG results",
     "prefix": "Prefix used for the output files",
     "taxonomy_file": "A file containing the taxonomy of the BAM references in the format d__;p__;c__;o__;f__;g__;s__.",
@@ -202,7 +209,18 @@ def get_arguments(argv=None):
         description="A simple tool to extract damaged reads from BAM files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument(
+    # parent_parser = argparse.ArgumentParser(add_help=False)
+    required = parser.add_argument_group("required arguments")
+    optional = parser.add_argument_group("optional arguments")
+    required.add_argument(
+        "-b",
+        "--bam",
+        type=lambda x: is_valid_file(parser, x, "--bam"),
+        dest="bam",
+        help=help_msg["bam"],
+        required=True,
+    )
+    required.add_argument(
         "-m",
         "--metaDMG-results",
         type=lambda x: is_valid_file(parser, x, "--metaDMG-results"),
@@ -210,22 +228,29 @@ def get_arguments(argv=None):
         help=help_msg["metaDMG_results"],
         required=True,
     )
-    parser.add_argument(
+    required.add_argument(
         "-f",
         "--metaDMG-filter",
-        type=lambda x: is_valid_filter(parser, x, "--metaDMG-filter"),
+        type=lambda x: is_valid_filter(parser, x, "--metaDMG-filter", "metaDMG"),
         dest="metaDMG_filter",
         help=help_msg["metaDMG_filter"],
         required=True,
     )
-    parser.add_argument(
-        "-b",
-        "--bam",
-        type=lambda x: is_valid_file(parser, x, "--bam"),
-        dest="bam",
-        help=help_msg["bam"],
+    optional.add_argument(
+        "--fb-data",
+        type=lambda x: is_valid_file(parser, x, "--fb-data"),
+        dest="fb_data",
+        help=help_msg["fb_data"],
+        required=False,
     )
-    parser.add_argument(
+    optional.add_argument(
+        "--fb-filter",
+        type=lambda x: is_valid_filter(parser, x, "--fb-filter", "filterBAM"),
+        dest="fb_filter",
+        help=help_msg["fb_filter"],
+        required=False,
+    )
+    optional.add_argument(
         "-p",
         "--prefix",
         type=str,
@@ -233,30 +258,30 @@ def get_arguments(argv=None):
         dest="prefix",
         help=help_msg["prefix"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "--combine", dest="combine", action="store_true", help=help_msg["combine"]
     )
-    parser.add_argument(
+    optional.add_argument(
         "--only-damaged",
         dest="only_damaged",
         action="store_true",
         help=help_msg["only_damaged"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "-T",
         "--taxonomy-file",
         type=lambda x: is_valid_file(parser, x, "---taxonomy-file"),
         dest="taxonomy_file",
         help=help_msg["taxonomy_file"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "-r",
         "--rank",
         type=lambda x: is_valid_rank(parser, x, "--rank"),
         dest="rank",
         help=help_msg["rank"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "-M",
         "--sort-memory",
         type=lambda x: check_suffix(x, parser=parser, var="--sort-memory"),
@@ -264,7 +289,7 @@ def get_arguments(argv=None):
         dest="sort_memory",
         help=help_msg["sort_memory"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "-t",
         "--threads",
         type=lambda x: int(
@@ -274,7 +299,7 @@ def get_arguments(argv=None):
         default=1,
         help=help_msg["threads"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "--chunk-size",
         type=lambda x: int(
             check_values(x, minval=1, maxval=100000, parser=parser, var="--chunk-size")
@@ -283,10 +308,10 @@ def get_arguments(argv=None):
         dest="chunk_size",
         help=help_msg["chunk_size"],
     )
-    parser.add_argument(
+    optional.add_argument(
         "--debug", dest="debug", action="store_true", help=help_msg["debug"]
     )
-    parser.add_argument(
+    optional.add_argument(
         "--version",
         action="version",
         version="%(prog)s " + __version__,
@@ -319,6 +344,7 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
                 "fastq_nondamaged": f"{prefix}.non-damaged.fastq.gz",
                 "fastq_multi": f"{prefix}.multi.fastq.gz",
                 "fastq_combined": f"{prefix}.fastq.gz",
+                "fastq_discarded": f"{prefix}.discarded.fastq.gz",
             }
     else:
         if combined:
@@ -343,6 +369,7 @@ def create_output_files(prefix, bam, taxon=None, combined=False):
                     ] = f"{prefix}.{k}{i}.non-damaged.fastq.gz"
                     out_files[f"fastq_multi_{k}{i}"] = f"{prefix}.{k}{i}.multi.fastq.gz"
                     out_files[f"fastq_combined_{k}{i}"] = f"{prefix}.{k}{i}.fastq.gz"
+                    out_files["fastq_discarded"] = f"{prefix}.discarded.fastq.gz"
     return out_files
 
 
